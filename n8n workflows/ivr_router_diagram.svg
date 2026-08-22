@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="Voice IVR Call Router architecture: a real-time lane that responds to the caller before logging, and a post-call lane that tickets the outcome">
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6E6E8A"/>
+    </marker>
+    <marker id="arwv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#A78BFA"/>
+    </marker>
+    <style>
+      .t   { font-family: Inter, 'Segoe UI', system-ui, sans-serif; }
+      .ttl { font-size: 17px; font-weight: 700; letter-spacing: .14em; fill: #F2F2F7; }
+      .sub { font-size: 12px; fill: #8A8AA0; }
+      .lane{ font-size: 10.5px; font-weight: 700; letter-spacing: .16em; fill: #A78BFA; }
+      .nd  { font-size: 11.5px; font-weight: 600; fill: #E8E8F0; }
+      .nds { font-size: 9.5px; fill: #8A8AA0; letter-spacing: .04em; }
+      .note{ font-size: 10.5px; fill: #8A8AA0; }
+      .dept{ font-size: 11px; fill: #B8B8CC; }
+      .foot{ font-size: 10px; fill: #6E6E8A; letter-spacing: .06em; }
+    </style>
+  </defs>
+
+  <rect width="800" height="600" fill="#0F0F1A"/>
+
+  <text class="t ttl" x="30" y="40">VOICE IVR CALL ROUTER</text>
+  <text class="t sub" x="30" y="60">n8n owns the routing decision — the assistant only reports what it heard</text>
+
+  <!-- ============ LANE 1 — real time ============ -->
+  <rect x="30" y="74" width="740" height="204" rx="12" fill="none" stroke="#2D2D44"/>
+  <text class="t lane" x="50" y="99">WHILE THE CALLER IS ON THE LINE</text>
+
+  <g>
+    <rect x="50"  y="112" width="148" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="124" y="134" text-anchor="middle">Tool call in</text>
+    <text class="t nds" x="124" y="150" text-anchor="middle">VAPI webhook</text>
+
+    <rect x="234" y="112" width="148" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="308" y="134" text-anchor="middle">Parse intent</text>
+    <text class="t nds" x="308" y="150" text-anchor="middle">4 payload shapes</text>
+
+    <rect x="418" y="112" width="148" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="492" y="134" text-anchor="middle">Routing rules</text>
+    <text class="t nds" x="492" y="150" text-anchor="middle">no network calls</text>
+
+    <rect x="602" y="112" width="148" height="52" rx="8" fill="#2A1F52" stroke="#A78BFA" stroke-width="1.5"/>
+    <text class="t nd"  x="676" y="134" text-anchor="middle" fill="#C4B5FD">RESPOND</text>
+    <text class="t nds" x="676" y="150" text-anchor="middle" fill="#A78BFA">caller hears it</text>
+
+    <line x1="202" y1="138" x2="228" y2="138" stroke="#6E6E8A" marker-end="url(#arw)"/>
+    <line x1="386" y1="138" x2="412" y2="138" stroke="#6E6E8A" marker-end="url(#arw)"/>
+    <line x1="570" y1="138" x2="596" y2="138" stroke="#6E6E8A" marker-end="url(#arw)"/>
+  </g>
+
+  <path d="M 676 164 L 676 188 Q 676 198 666 198 L 502 198 Q 492 198 492 208" fill="none" stroke="#A78BFA" stroke-dasharray="4 4" marker-end="url(#arwv)"/>
+
+  <text class="t note" x="50" y="216">n8n keeps executing after the</text>
+  <text class="t note" x="50" y="232">response is sent — logging costs</text>
+  <text class="t note" x="50" y="248">the caller no dead air.</text>
+
+  <g>
+    <rect x="418" y="214" width="148" height="48" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="492" y="234" text-anchor="middle">Log to Airtable</text>
+    <text class="t nds" x="492" y="249" text-anchor="middle">failures can't block</text>
+
+    <rect x="602" y="214" width="148" height="48" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="676" y="234" text-anchor="middle">Alert on-call</text>
+    <text class="t nds" x="676" y="249" text-anchor="middle">triage only</text>
+
+    <line x1="570" y1="238" x2="596" y2="238" stroke="#6E6E8A" marker-end="url(#arw)"/>
+  </g>
+
+  <!-- ============ LANE 2 — post call ============ -->
+  <rect x="30" y="294" width="740" height="170" rx="12" fill="none" stroke="#2D2D44"/>
+  <text class="t lane" x="50" y="319" fill="#C4B5FD">AFTER THE CALL ENDS</text>
+
+  <g>
+    <rect x="50"  y="336" width="120" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="110" y="358" text-anchor="middle">End-of-call</text>
+    <text class="t nds" x="110" y="374" text-anchor="middle">webhook</text>
+
+    <rect x="195" y="336" width="120" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="255" y="358" text-anchor="middle">Normalize</text>
+    <text class="t nds" x="255" y="374" text-anchor="middle">report</text>
+
+    <rect x="340" y="336" width="120" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="400" y="358" text-anchor="middle">Find record</text>
+    <text class="t nds" x="400" y="374" text-anchor="middle">by call ID</text>
+
+    <rect x="485" y="336" width="120" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="545" y="358" text-anchor="middle">Build ticket</text>
+    <text class="t nds" x="545" y="374" text-anchor="middle">by department</text>
+
+    <rect x="630" y="336" width="120" height="52" rx="8" fill="#1A1A2E" stroke="#2D2D44"/>
+    <text class="t nd"  x="690" y="358" text-anchor="middle">Upsert</text>
+    <text class="t nds" x="690" y="374" text-anchor="middle">+ email on fail</text>
+
+    <line x1="174" y1="362" x2="190" y2="362" stroke="#6E6E8A" marker-end="url(#arw)"/>
+    <line x1="319" y1="362" x2="335" y2="362" stroke="#6E6E8A" marker-end="url(#arw)"/>
+    <line x1="464" y1="362" x2="480" y2="362" stroke="#6E6E8A" marker-end="url(#arw)"/>
+    <line x1="609" y1="362" x2="625" y2="362" stroke="#6E6E8A" marker-end="url(#arw)"/>
+  </g>
+
+  <text class="t note" x="50" y="418">Keyed on the call ID, so a retried webhook updates the same ticket instead of filing a second one.</text>
+  <text class="t note" x="50" y="440">Latency no longer matters here — the caller has already hung up.</text>
+
+  <!-- ============ departments ============ -->
+  <text class="t lane" x="30" y="502" fill="#6E6E8A">SIX DEPARTMENTS, ROUTED DIFFERENTLY</text>
+  <text class="t dept" x="30" y="526">Appointments  ·  Billing  ·  Prescription refill  ·  Front desk  —  transfer in hours, ticket after</text>
+  <text class="t dept" x="30" y="548" fill="#A78BFA">Medical records — never transfers, always ticketed  ·  Nurse triage — always reaches a human</text>
+  <text class="t dept" x="30" y="570" fill="#8A8AA0">Below 60% confidence nothing routes — the assistant asks one more question.</text>
+
+  <text class="t foot" x="30" y="592">SYNTHETIC CLINIC · NO REAL PATIENT DATA</text>
+</svg>
