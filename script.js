@@ -18,6 +18,24 @@ document.addEventListener('DOMContentLoaded', () => {
   themeToggle.addEventListener('click', toggleTheme);
   themeToggleMobile.addEventListener('click', toggleTheme);
 
+  // Calendly inline widget — initialized manually (rather than via its
+  // auto-scanning class/data-url) so the calendar's own colors can match
+  // whichever theme is active on first load. The <script> tag that defines
+  // window.Calendly is loaded without `async` specifically so it finishes
+  // executing before this handler runs, guaranteeing it exists here.
+  const calendlyEmbed = document.getElementById('calendlyEmbed');
+  if (calendlyEmbed && window.Calendly) {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const colors = isDark
+      ? { bg: '0f0f0f', text: 'f5f5f4', primary: 'a78bfa' }
+      : { bg: 'fafaf9', text: '1a1a1a', primary: '7c3aed' };
+    calendlyEmbed.innerHTML = '';
+    Calendly.initInlineWidget({
+      url: `https://calendly.com/reymarcalmaden704/30min?primary_color=${colors.primary}&text_color=${colors.text}&background_color=${colors.bg}&hide_gdpr_banner=1`,
+      parentElement: calendlyEmbed
+    });
+  }
+
   // Rotating roles animation
   const roles = document.querySelectorAll('.role-text');
   let currentRoleIndex = 0;

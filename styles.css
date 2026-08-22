@@ -2122,7 +2122,8 @@ h1, h2, h3,
   .workflow-node circle,
   .workflow-node text,
   .hero::before,
-  .role-text.active::after {
+  .role-text.active::after,
+  .calendly-spinner {
     animation: none;
   }
 
@@ -2746,8 +2747,33 @@ h1, h2, h3,
   overflow: hidden;
 }
 
-.contact-calendly-embed .calendly-inline-widget {
+.contact-calendly-embed .calendly-inline-widget,
+.contact-calendly-embed > div {
   width: 100%;
+}
+
+.calendly-loading {
+  height: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.calendly-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  animation: calendlySpin 0.8s linear infinite;
+}
+
+@keyframes calendlySpin {
+  to { transform: rotate(360deg); }
 }
 
 .form-note {

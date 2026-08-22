@@ -1073,7 +1073,12 @@
         </div>
 
         <div class="contact-calendly-embed reveal">
-          <div class="calendly-inline-widget" data-url="https://calendly.com/reymarcalmaden704/30min?primary_color=7c3aed&hide_gdpr_banner=1" style="min-width:320px;height:700px;"></div>
+          <div id="calendlyEmbed" style="min-width:320px;height:700px;">
+            <div class="calendly-loading">
+              <span class="calendly-spinner" aria-hidden="true"></span>
+              <span>Loading your calendar…</span>
+            </div>
+          </div>
         </div>
 
         <p class="form-note form-note--center">Prefer email? Reach me directly at <a href="mailto:reymarcalmaden704@gmail.com">reymarcalmaden704@gmail.com</a></p>
@@ -1104,6 +1109,6 @@
   </footer>
 
   <script src="script.js"></script>
-  <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
+  <script src="https://assets.calendly.com/assets/external/widget.js"></script>
 </body>
 </html>
