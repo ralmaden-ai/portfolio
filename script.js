@@ -20,20 +20,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Calendly inline widget — initialized manually (rather than via its
   // auto-scanning class/data-url) so the calendar's own colors can match
-  // whichever theme is active on first load. The <script> tag that defines
-  // window.Calendly is loaded without `async` specifically so it finishes
-  // executing before this handler runs, guaranteeing it exists here.
+  // whichever theme is active on first load. window.Calendly isn't
+  // guaranteed to exist the instant this handler runs (ad blockers and
+  // privacy extensions commonly block calendly.com's script outright, and
+  // even when it loads, its own internal setup can land after
+  // DOMContentLoaded) — so this polls briefly instead of checking once,
+  // and falls back to a plain link rather than leaving the loading
+  // spinner stuck on-screen forever if Calendly never becomes available.
   const calendlyEmbed = document.getElementById('calendlyEmbed');
-  if (calendlyEmbed && window.Calendly) {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const colors = isDark
-      ? { bg: '0f0f0f', text: 'f5f5f4', primary: 'a78bfa' }
-      : { bg: 'fafaf9', text: '1a1a1a', primary: '7c3aed' };
-    calendlyEmbed.innerHTML = '';
-    Calendly.initInlineWidget({
-      url: `https://calendly.com/reymarcalmaden704/30min?primary_color=${colors.primary}&text_color=${colors.text}&background_color=${colors.bg}&hide_gdpr_banner=1`,
-      parentElement: calendlyEmbed
-    });
+  const calendlyUrl = 'https://calendly.com/reymarcalmaden704/30min';
+
+  function tryInitCalendly(attemptsLeft) {
+    if (!calendlyEmbed) return;
+    if (window.Calendly) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const colors = isDark
+        ? { bg: '0f0f0f', text: 'f5f5f4', primary: 'a78bfa' }
+        : { bg: 'fafaf9', text: '1a1a1a', primary: '7c3aed' };
+      calendlyEmbed.innerHTML = '';
+      Calendly.initInlineWidget({
+        url: `${calendlyUrl}?primary_color=${colors.primary}&text_color=${colors.text}&background_color=${colors.bg}&hide_gdpr_banner=1`,
+        parentElement: calendlyEmbed
+      });
+      return;
+    }
+    if (attemptsLeft > 0) {
+      setTimeout(() => tryInitCalendly(attemptsLeft - 1), 200);
+      return;
+    }
+    // Gave up after ~8 seconds — show a direct link instead of a dead spinner.
+    calendlyEmbed.innerHTML = `
+      <div class="calendly-fallback">
+        <p>The live calendar didn't load — this can happen with an ad blocker or privacy extension active.</p>
+        <a href="${calendlyUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Open the booking calendar</a>
+      </div>
+    `;
+  }
+
+  if (calendlyEmbed) {
+    tryInitCalendly(40);
   }
 
   // Rotating roles animation

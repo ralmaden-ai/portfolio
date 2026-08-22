@@ -2752,7 +2752,8 @@ h1, h2, h3,
   width: 100%;
 }
 
-.calendly-loading {
+.calendly-loading,
+.calendly-fallback {
   height: 700px;
   display: flex;
   flex-direction: column;
@@ -2761,6 +2762,12 @@ h1, h2, h3,
   gap: 1rem;
   color: var(--text-muted);
   font-size: 0.9375rem;
+}
+
+.calendly-fallback p {
+  max-width: 380px;
+  text-align: center;
+  line-height: 1.6;
 }
 
 .calendly-spinner {
