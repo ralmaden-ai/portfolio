@@ -3,7 +3,7 @@
 Personal portfolio site showcasing automation and AI workflow builds across n8n,
 GoHighLevel, Make, and Zapier.
 
-**Live site:** _add the Vercel URL here once deployed_
+**Live site:** https://reymarc-portfolio.vercel.app/
 
 ## Stack
 
@@ -19,13 +19,30 @@ dependencies — the site is served exactly as the files appear in this repo.
 Open `index.html` in a browser. That's the entire workflow — there is nothing to
 install or compile.
 
+## Layout
+
+```
+index.html  styles.css  script.js  favicon.svg
+Reymarc_Almaden_Resume.pdf     the file the hero's Resume button serves
+assets/
+├── avatar.png                 hero portrait, also the social share image
+├── logos/                     tech-stack marquee icons
+├── projects/                  project card + modal images
+│   └── full/                  full-resolution originals for the zoom lightbox
+├── certifications/            certificate images
+└── source/                    masters that are never served (resume .docx, etc.)
+```
+
+Every asset path is lowercase and hyphenated, with no spaces — spaces and `&`
+have to be percent-encoded in a URL, and it is easy to get that wrong by hand.
+
 ## Project images
 
-Card and modal images are downscaled derivatives in `thumbs/`, capped at roughly
-2 megapixels each. The full-resolution originals live in `GHL Workflows/`,
-`n8n workflows/`, and `Funnels/`, and are loaded only when a visitor clicks the
-zoom button. Keep that split when adding new work — a full-size workflow
-screenshot in a card slot will make the page stutter badly on scroll.
+Card and modal images are downscaled derivatives capped at roughly 2 megapixels.
+The full-resolution originals live in `assets/projects/full/` under **the same
+filename as their thumbnail**, and load only when a visitor clicks the zoom
+button. Keep that split when adding new work — a full-size workflow screenshot
+in a card slot will make the page stutter badly on scroll.
 
 ## Adding a project
 

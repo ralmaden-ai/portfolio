@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Business Automation Hub',
       description: "Five routines an Australian business group used to do by hand every week — the operations report, chasing cold leads, chasing unpaid invoices, flagging stalled property projects, and industry research — rebuilt as five automations that run on their own schedule and email the right person, without anyone opening a spreadsheet.",
       tags: ['n8n', 'Groq AI', 'Google Sheets', 'Gmail API', 'Serper.dev'],
-      image: 'n8n workflows/AU_Businesshub.png',
+      image: 'assets/projects/au-business-hub.png',
       caseStudy: {
         client: 'Portfolio Project (Confidential Client)',
         need: "A multi-industry Australian business group was running five completely separate manual processes — someone had to compile the weekly operations report by hand, track and score incoming leads in a spreadsheet, chase down unpaid invoices individually, update project status across properties, and manually research and summarize industry information. None of these connected to each other, so the team was re-entering the same information across tools every week.",
@@ -280,8 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Peak Performance Fitness Funnel',
       description: "A fitness brand was getting sign-ups but losing them on the way to a booked session, and no-shows were eating the sessions that did get booked. I audited what they had, fixed where leads were dropping out, and built an automatic confirmation and three-stage reminder sequence so every booking gets chased without the owner remembering to do it.",
       tags: ['GoHighLevel', 'Appointment Reminders', 'Workflow Audit', 'CRM Pipelines'],
-      image: 'thumbs/peak-performance-workflow.png',
-      imageFull: 'GHL Workflows/Appointment Confirmation + Reminders - Peak Performance.png',
+      image: 'assets/projects/peak-performance-workflow.png',
+      imageFull: 'assets/projects/full/peak-performance-workflow.png',
       caseStudy: {
         client: 'Peak Performance Fitness',
         need: "Peak Performance Fitness had opt-ins coming into their GoHighLevel setup, but gaps in the lead capture and follow-up automation meant a chunk of those leads never turned into a booked consultation. There was no consistent reminder system in place, so booked appointments were also at risk of no-shows with nothing automated to bring people back.",
@@ -358,8 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Harbor & Vale Realty',
       description: "A Charlotte brokerage had every website enquiry landing in one shared inbox, where someone had to read each one and work out which agent should get it. I built the home-valuation page and nine workflows behind it, so a lead is sorted into the right buyer or seller pipeline and sent to the assigned agent the moment they hit submit.",
       tags: ['GoHighLevel', 'CRM Pipelines', 'Landing Pages', 'Real Estate'],
-      image: 'thumbs/harbor-vale-workflow.png',
-      imageFull: 'GHL Workflows/Harbor & Vale - New Lead Intake (Buyer Seller Branch_2026-08-13.png',
+      image: 'assets/projects/harbor-vale-workflow.png',
+      imageFull: 'assets/projects/full/harbor-vale-workflow.png',
       caseStudy: {
         client: 'Harbor & Vale Realty',
         need: "Every home-valuation lead coming through Harbor & Vale Realty's website landed in the same inbox regardless of whether the person wanted to buy, sell, or both — leaving someone to manually read each submission and figure out which agent and pipeline it belonged to before any follow-up could start.",
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'AI Facebook Chatbot',
       description: 'An AI-powered Facebook Messenger chatbot that answers customer inquiries about a business in real time, pulling from a live knowledge base stored in Google Docs.',
       tags: ['n8n', 'Google Gemini', 'AI Agent'],
-      image: 'n8n workflows/Facebook_chatbot.png',
+      image: 'assets/projects/facebook-chatbot.png',
       caseStudy: {
         client: 'Portfolio Project (Self-Initiated)',
         need: "Businesses often struggle to respond to Facebook Messenger inquiries quickly, especially outside business hours — manual replies slow response times and increase support workload. Without dedicated staff monitoring Messenger around the clock, valid customer questions about hours, pricing, services, or availability risk going unanswered, and any automated response needed to stay grounded in real business information rather than generic AI guesses.",
@@ -513,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Lead Follow-up & Recovery System',
       description: 'An automated lead follow-up system that detects replies and re-engages cold leads with AI-personalized outreach — reducing manual follow-up work and recovering leads that would otherwise go cold.',
       tags: ['n8n', 'Groq AI', 'Google Sheets'],
-      image: 'n8n workflows/Lead_followup_system.png',
+      image: 'assets/projects/lead-followup-system.png',
       caseStudy: {
         client: 'Portfolio Project (Self-Initiated)',
         need: "Businesses that capture leads through forms often lose them simply because follow-up is inconsistent — a lead comes in, gets one confirmation email, and then falls through the cracks if no one manually tracks whether they replied or needs a nudge. Manually tracking every lead's reply status and remembering to send follow-ups at the right intervals doesn't scale — it depends on someone checking inboxes and sheets every day, and leads that don't respond right away are the ones most likely to be forgotten entirely.",
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Medical Records Retrieval System',
       description: "Getting a patient's records out of a hospital takes weeks of chasing: check the provider is real, send the request, chase it when nobody replies, read whatever comes back, then check what arrived is actually complete. This runs that entire job — seven automations that pass a case along from first request to closed file, and stop for a human at every point where someone genuinely needs to decide something.",
       tags: ['n8n', 'Groq AI', 'Airtable', 'Webhooks', 'Human-in-the-Loop'],
-      image: 'n8n workflows/Medical_records_retrieval.png',
+      image: 'assets/projects/medical-records-retrieval.png',
       caseStudy: {
         client: 'Portfolio Project (Self-Initiated, Synthetic Data)',
         need: "Medical records retrieval is high-volume, deadline-driven work that still runs almost entirely on manual effort — someone verifies facility and provider details by hand, drafts and sends each request, tracks dozens of open cases across separate portals, remembers to follow up before the deadline, and reads every facility reply to work out what happens next. None of it connects, case status lives in a spreadsheet or in someone's head, and there's no reliable record of what was sent, when, and who approved it — which in a healthcare setting is the part that matters most.",
@@ -692,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Voice IVR Call Router',
       description: "An AI receptionist for a clinic. It answers the phone, works out what the caller actually needs from how they describe it — no menus, no \"press 1\" — and gets them to the right place in under a second: transferred to a person, booked for a callback, or logged as a request. Six departments, each handled the way that department actually works.",
       tags: ['n8n', 'VAPI', 'Airtable', 'Voice AI', 'Groq'],
-      image: 'n8n workflows/ivr_router_diagram.svg',
+      image: 'assets/projects/ivr-router-diagram.svg',
       caseStudy: {
         client: 'Portfolio Project (Self-Initiated, Synthetic Clinic)',
         need: "A clinic front desk spends its day on calls that mostly are not clinical — appointment changes, billing questions, refill requests, records requests — and every one of them occupies a person who could be doing something else. A phone tree is the usual answer, and everyone hates it: rigid menus, no idea what the caller actually wants, and the genuinely urgent call queued behind someone asking about a copay. The hard part is not answering the phone; it is deciding, quickly and correctly, where each call should go — and knowing when the answer is \"a human, right now.\"",
