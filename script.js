@@ -684,6 +684,124 @@ document.addEventListener('DOMContentLoaded', () => {
           cost: 'more manual review than a bolder design would need'
         }
       ]
+    },
+    {
+      number: 'PROJECT 07',
+      category: 'Voice AI Receptionist',
+      platform: 'n8n + VAPI',
+      title: 'AI Receptionist for HVAC',
+      description: "A voice agent that answers the phone for an HVAC and plumbing company. It works out what the caller needs from how they describe it, checks the real calendar, books the job into a two-hour window, cancels an existing one from a reference number, and flags a genuine emergency to the on-call phone — no menus, no \"press 1\", and no call that ends without a record.",
+      tags: ['n8n', 'VAPI', 'Google Calendar', 'Google Sheets', 'Voice AI'],
+      image: 'assets/projects/ai-receptionist.png',
+      caseStudy: {
+        client: 'Portfolio Project (Self-Initiated, Synthetic HVAC Company)',
+        need: "A trades business loses work on the phone. Calls arrive while every technician is already on a job, so they ring out and the customer calls the next company on the list. The ones that do get answered are mostly routine — book me in, move my appointment, are you open Saturday — and each one still occupies whoever picked up. An answering service takes a message but cannot see the calendar, so nothing is actually booked until someone calls back. The hard part is not answering; it is finishing the job on the call: reading the real schedule, writing a real appointment into it, and knowing which call is the burst pipe that should interrupt someone.",
+        solution: "Built a voice receptionist on VAPI with all the logic in a single 44-node n8n workflow. The assistant handles the conversation and calls one of four tools; the workflow routes on the tool name, applies the rules, and answers while the caller is still on the line. Booking reads Google Calendar for genuinely open windows, offers them, then re-checks that exact window immediately before writing so two callers cannot be given the same slot. Every booking is written into the calendar event itself — phone, email, address, problem, and a short reference number — because on the second round trip the model sends only what it thinks is needed, and the conversation cannot be trusted as the record. Cancellation matches on that reference first and phone second, which is what makes it work on web calls, where there is no caller ID at all.",
+        result: "All four tools run end to end on VAPI web calls: a booking lands in Google Calendar with a reference number, logs to Google Sheets, emails the customer, and alerts the office on Telegram. Eleven separate response paths, every one of them terminating at a Respond node, verified by a pre-flight script written for this build that traces every path from the webhook and catches unwired error outputs before a call ever hits them. The work is documented as a 426-line playbook of symptom, cause and fix — written so the next voice build starts where this one finished. Not yet on a provisioned phone number: tested through VAPI web calls, so the PSTN leg is the remaining step. Synthetic company, synthetic bookings."
+      },
+      stats: [
+        { n: '44', l: 'Nodes' },
+        { n: '4', l: 'Voice tools' },
+        { n: '11', l: 'Respond paths' },
+        { n: '5', l: 'Integrations' }
+      ],
+      concept: {
+        title: 'The calendar event is the record, not the conversation',
+        lead: "A booking takes more than one round trip, and on the second one the assistant sends only what it judges relevant — usually just a reference number. Anything held only in the conversation arrives blank. So the details are written into the calendar event at booking time and read back out of it later. The event is the source of truth; the call is just how it got filled in.",
+        chain: [
+          { label: 'Caller describes the problem' },
+          { label: 'Assistant calls a tool' },
+          { label: 'n8n applies the rules' },
+          { label: 'Answer while they wait' },
+          { label: 'Event, sheet, alert', kind: 'term' }
+        ],
+        notes: [
+          { label: 'A reference number beats caller ID', text: 'Web calls carry no caller number, and in real life people ring from a different phone. Booking issues a short reference and puts it in the event title, so cancelling matches on something the caller actually has rather than on where they happen to be calling from.' },
+          { label: 'Re-check the window before writing it', text: 'The calendar is read on the first round trip and written on the second. Two callers offered the same window would both get it, so the exact window is queried again immediately before the write — and if it has gone, the assistant says so rather than double-booking a technician.' },
+          { label: 'Answer first, bookkeeping after', text: 'The response goes out before the calendar write, the sheet row, the email and the alert, so the caller is never listening to silence while an API call finishes. Logging steps are set to fail open — a Telegram hiccup must never take down a live call.' }
+        ]
+      },
+      stagesTitle: 'One Webhook, Four Tools',
+      stages: [
+        {
+          marker: '01', title: 'Parse and Route',
+          desc: 'Every tool call from the assistant arrives at one webhook. The payload is parsed, the tool name read, and the call routed to its branch — with a fallback branch for a tool name that does not match, so an unrecognised call still gets a spoken answer and a logged row instead of dead air.',
+          tags: [{ label: 'Webhook', kind: 'hook' }, { label: 'Switch · 4 ways' }, { label: 'Fallback wired' }],
+          flow: 'one entry point · every path ends at a Respond node'
+        },
+        {
+          marker: '02', title: 'book_appointment',
+          desc: 'Reads the calendar for the day the caller named, works out which two-hour windows are genuinely free, and offers them. Once a window is chosen it re-queries that exact slot, writes the event with the caller details and a reference number in the description, logs the booking, emails the customer, and tells the office.',
+          tags: [{ label: 'Google Calendar', kind: 'sched' }, { label: 'Re-check before write', kind: 'human' }, { label: 'Email + Telegram' }],
+          flow: 'find open windows → caller picks → re-check → write event → confirm'
+        },
+        {
+          marker: '03', title: 'cancel_appointment',
+          desc: 'Finds the booking by the reference number read out at booking time, falling back to phone. The details come back out of the event description rather than the conversation, so the cancellation log is complete even when the assistant sends nothing but the reference. Cancels the event, logs it, alerts the office.',
+          tags: [{ label: 'Match on reference' }, { label: 'Phone fallback' }, { label: 'Telegram alert' }],
+          flow: 'reference → event → cancel → log → alert'
+        },
+        {
+          marker: '04', title: 'escalate_emergency',
+          desc: 'A caller describing damage happening right now skips the booking flow entirely and goes straight to a high-priority Telegram alert, with an after-hours check deciding how it is routed. The caller decides what counts as an emergency, not the model — asking someone standing in water whether it can wait a few days is the wrong question.',
+          tags: [{ label: 'After-hours check', kind: 'sched' }, { label: 'Priority alert', kind: 'human' }],
+          flow: 'caller says it is urgent → alert now → log'
+        },
+        {
+          marker: '05', title: 'log_lead',
+          desc: 'The catch-all, and the reason no call ends empty-handed. Anything that is not a booking, a cancellation or an emergency is captured as a lead — and the assistant is instructed that every call must end with a tool call, so a conversation it cannot finish still leaves a row someone can follow up.',
+          tags: [{ label: 'Google Sheets', kind: 'sched' }, { label: 'Every call leaves a row' }],
+          flow: 'no call disappears without a record'
+        }
+      ],
+      decisions: [
+        {
+          title: 'The rule goes in the parameter description, not the prompt',
+          text: 'The assistant kept sending an empty slot field however firmly the system prompt was worded. Moving the instruction into the description of the parameter itself — where the model is actually deciding what to write into that field — fixed in one change what three prompt rewrites could not. The prompt is context; the parameter description is the point of decision.',
+          cost: 'the tool schema becomes the real documentation, so a rule changed in the prompt alone silently does nothing'
+        },
+        {
+          title: 'Delete any parameter you do not want filled',
+          text: 'The prompt said not to ask for a phone number, but the schema still had a phone field — and the alerts started arriving with invented numbers in them. A model given an empty slot will fill it rather than leave it blank. Removing the field entirely is the only reliable fix, because an absent field cannot be hallucinated.',
+          cost: 'a second guard is still needed in the parser for the fields that do have to stay'
+        },
+        {
+          title: 'Normalise what the model says, server-side',
+          text: 'Emails arrive as the literal words "mark reyes at example dot com". Phone numbers arrive as placeholder digits. Read-backs group digits into "eight ninety-five four" unless the value is sent pre-spaced. None of this is reliably fixable from the prompt, so every value is normalised and sanity-checked in the workflow before it is written anywhere.',
+          cost: 'parser code that has to be maintained alongside the prompt'
+        },
+        {
+          title: 'Transfers removed on purpose',
+          text: 'Blind-transferring an emergency to a technician already on a job helps nobody, and a transfer that cannot be completed is worse than one never offered — the assistant announces it, the call drops, and no record exists. Emergencies became an immediate alert to a person who can call back instead.',
+          cost: 'no path to a live human mid-call; the fastest response is a callback, not a transfer'
+        }
+      ],
+      status: [
+        {
+          kind: 'ok', title: 'Done',
+          items: [
+            'All four tools working end to end on VAPI web calls — booking writes a real calendar event, logs to Sheets, emails the customer and alerts Telegram',
+            'Pre-flight script written for this build: traces every path from the webhook to a Respond node, checks node references resolve, and catches unwired error outputs',
+            'Every failure mode documented as a 426-line symptom / cause / fix playbook so the next voice build does not re-learn them'
+          ]
+        },
+        {
+          kind: 'warn', title: 'Not yet exercised',
+          items: [
+            'No provisioned phone number — tested on web calls, so the PSTN leg is unproven',
+            'Seven-day booking horizon: "next Friday" books the near one, and a bare date like "the 25th" does not parse',
+            'Two-hour windows only, with no custom durations'
+          ]
+        },
+        {
+          kind: 'stop', title: 'Known boundaries',
+          items: [
+            'One calendar with no technician assignment — nothing models who is actually doing the work',
+            'No rescheduling primitive: a reschedule is a cancel plus a booking in one call, two operations that can half-fail',
+            'Transfers deliberately not implemented — an emergency becomes an alert and a callback, never a live handoff'
+          ]
+        }
+      ]
     }
   ];
 
