@@ -802,6 +802,118 @@ document.addEventListener('DOMContentLoaded', () => {
           ]
         }
       ]
+    },
+    {
+      number: 'PROJECT 08',
+      category: 'Voice AI Call Routing',
+      platform: 'n8n + VAPI + GHL',
+      title: 'Northshore Urgent Care',
+      description: "A voice receptionist for an urgent care clinic. Maya answers, looks the caller up, works out which department they actually need from how they describe it, and either transfers them or takes a message that lands in the CRM as a task someone owns. The routing decision is made in the automation, not in the assistant's instructions — so it can be read, tested, and corrected.",
+      tags: ['n8n', 'VAPI', 'Groq', 'Google Sheets', 'GoHighLevel'],
+      image: 'assets/projects/northshore-receptionist.png',
+      caseStudy: {
+        client: 'Portfolio Project (Self-Initiated, Fictional Clinic)',
+        need: "An urgent care front desk answers the same handful of calls all day — billing questions, test results, wait times, occupational health, and the occasional caller who genuinely needs a nurse. A phone tree makes every one of them press through a menu that never quite fits, and an answering service cannot see who the caller is or decide what is urgent. The real problem is the decision: working out, in a few seconds and from the caller's own words, which department this is — and being able to prove afterwards that the decision was right.",
+        solution: "Built a VAPI voice assistant with a single n8n workflow behind it. One webhook takes every event and fans out on VAPI's message type into three branches: a tool call looks the patient up in Google Sheets and builds context; a transfer request classifies the transcript with Groq, checks it against a department routing sheet, and approves or declines the transfer against opening hours; the end-of-call report logs the call and decides whether it needs escalating. Anything that cannot be transferred becomes a contact and a task in GoHighLevel, so the callback is owned by a person rather than sitting in a message queue. Every routing decision is written to its own sheet with the classification that produced it — which is what makes the system auditable rather than merely functional.",
+        result: "Routing confirmed correct on real VAPI calls across three departments — billing, triage, and occupational health — verified in the Routing_Decisions sheet by checking the workflow's own classification against the department the assistant actually announced. Getting there meant finding a bug that every green node in n8n was hiding: a doubled character in one request body made the classifier fail on every single call, and a safe fallback quietly sent all of them to the front desk. It also meant discovering that the earlier fix had been confirmed against a test payload of the wrong shape, so the confirmation was worthless. Two departments remain untested, and the transfer bridge itself cannot be proven from a browser call."
+      },
+      stats: [
+        { n: '3', l: 'Event types' },
+        { n: '3', l: 'Departments proven live' },
+        { n: '28', l: 'Nodes' },
+        { n: '5', l: 'Integrations' }
+      ],
+      concept: {
+        title: 'Every node was green while every call was misrouted',
+        lead: "One request body had a doubled leading character, so the classifier rejected every call it was sent. The code downstream caught the failure and fell back to the front desk — which is exactly what a careful fallback is supposed to do. The result was a system with a one hundred percent failure rate, reporting success at every step, for an unknown length of time. Nothing was red. Nothing was logged. The calls simply all went to the wrong place.",
+        chain: [
+          { label: 'Classifier rejects the call' },
+          { label: 'Fallback catches it' },
+          { label: 'Routes to front desk' },
+          { label: 'Node shows green' },
+          { label: 'Nobody finds out', kind: 'term' }
+        ],
+        notes: [
+          { label: 'The lesson is visibility, not the fallback', text: 'The fallback was correct — losing a call is worse than misrouting one. What was missing is that it fired silently. A fallback with no counter, flag or logged reason behind it will eventually hide a total failure behind a working interface, and the longer it works the less anyone thinks to check it.' },
+          { label: 'A synthetic payload proves only your assumption', text: 'The first fix looked confirmed because it was tested against a payload written by hand. The real transfer events had a different shape — no flat transcript at all, only an array of messages — so the classifier had been receiving an empty string every time. The test proved the code handled the shape it was given, and nothing more. Real payloads get captured first now.' },
+          { label: 'The tool cannot carry the answer', text: "VAPI's built-in transfer tool has no custom parameter schema, so the assistant can never pass the department as an argument no matter how the prompt is worded — the arguments always arrive empty. Routing rests entirely on the workflow's own reading of the transcript. That makes the transcript reconstruction load-bearing rather than a nicety." }
+        ]
+      },
+      stagesTitle: 'One Webhook, Three Event Types',
+      stages: [
+        {
+          marker: '01', title: 'Authenticate and Fan Out',
+          desc: 'Every VAPI event hits the same webhook. The payload is parsed, a shared secret checked, and the call routed on its message type — with an unauthorized response and a fallback branch both wired, so a bad secret or an unexpected event type still gets an answer instead of dead air.',
+          tags: [{ label: 'Webhook', kind: 'hook' }, { label: 'Shared secret', kind: 'human' }, { label: 'Switch · 3 types' }],
+          flow: 'one entry point · auth before anything else'
+        },
+        {
+          marker: '02', title: 'Patient Lookup',
+          desc: 'A tool call from the assistant mid-conversation. Reads the patient sheet, builds a context object the assistant can speak from, responds, and appends the lookup to a log. Matching by phone only works on a real phone call — on a browser test there is no caller ID to match on at all.',
+          tags: [{ label: 'Google Sheets', kind: 'sched' }, { label: 'Context build' }, { label: 'Logged' }],
+          flow: 'tool call → sheet lookup → context → spoken answer'
+        },
+        {
+          marker: '03', title: 'Department Routing',
+          desc: "The decision the whole system exists for. Reconstructs the transcript from VAPI's message array, sends it to Groq for classification, looks the result up in a department routing sheet, and checks the transfer against opening hours before approving or declining it. Both outcomes are written to the routing log with the classification that produced them.",
+          tags: [{ label: 'Groq classify', kind: 'ai' }, { label: 'Routing sheet', kind: 'sched' }, { label: 'Hours check', kind: 'human' }],
+          flow: 'transcript → classification → routing rules → approve or decline'
+        },
+        {
+          marker: '04', title: 'End of Call, Escalation and CRM',
+          desc: 'Fires once the call is over. Extracts the report, logs it, and decides whether it needs escalating — an internal notification if so. If a callback number was captured, the caller is upserted into GoHighLevel and a task created against them, so the follow-up is owned rather than queued.',
+          tags: [{ label: 'GHL contact + task' }, { label: 'Escalation branch', kind: 'human' }, { label: 'Gmail notify' }],
+          flow: 'report → log → escalate if needed → CRM contact and task'
+        }
+      ],
+      decisions: [
+        {
+          title: 'The routing decision lives in the automation, not the prompt',
+          text: 'The assistant could have been told which department to pick. Instead it talks, and the workflow decides what the conversation meant — classification, opening hours, and per-department rules all sit in logic that can be read and tested. It also turned out to be the only option available: the transfer tool cannot carry a department argument at all.',
+          cost: 'a network round trip mid-call, and a classifier that has to be right'
+        },
+        {
+          title: 'A silent fallback needs its own visibility',
+          text: 'The fallback that hid the misrouting bug was not removed — it is still the right behaviour. What changed is that the routing decision and the classification behind it are now written to their own sheet on every call, so a fallback firing repeatedly is something you can see rather than something you have to suspect.',
+          cost: 'a log row per call, and a habit of actually reading it'
+        },
+        {
+          title: 'The spoken callback number beats caller ID',
+          text: "There are two numbers for a caller and they are not the same thing: the one telephony reports, and the one the caller says out loud. The spoken number works even on a browser call, and respects a caller who asks to be reached somewhere else — so it takes priority when writing to the CRM.",
+          cost: 'a returning caller who gives a different number can end up as more than one contact'
+        },
+        {
+          title: 'The emergency check had to be made silent, explicitly',
+          text: 'An instruction to screen for emergencies was read by the assistant as a script to perform out loud — a caller ringing about a bill was told to hang up and dial emergency services. Saying "run this check" is not enough; the instruction has to state that the list is never spoken, and that a caller asking about a bill must never hear the word at all.',
+          cost: 'prompt rules that read as oddly emphatic until you know what they are preventing'
+        }
+      ],
+      status: [
+        {
+          kind: 'ok', title: 'Proven on real calls',
+          items: [
+            'Routing confirmed correct on live VAPI calls for billing, triage and occupational health — checked in the routing log, not just heard on the call',
+            'Transcript reconstruction from the message array, after the flat transcript field turned out never to exist on transfer events',
+            'Structured outputs used to capture caller name, callback number and reason, working around a call summary this VAPI version never populates'
+          ]
+        },
+        {
+          kind: 'warn', title: 'Not yet retested',
+          items: [
+            'CRM contact and task fixes, plus the callback-number guard, are live in the workflow but have not been re-run on a real call',
+            'Two departments — wait times and results — have never been tested at all',
+            'No error workflow attached yet, so a failure outside the handled branches surfaces nowhere'
+          ]
+        },
+        {
+          kind: 'stop', title: 'What a browser call cannot prove',
+          items: [
+            'There is no phone leg, so a correctly approved transfer still ends in a transfer failure every time — the bridge itself is unprovable from a browser',
+            'There is no caller ID, so the patient sheet lookup can never match on phone from a test call',
+            'Fictional clinic, synthetic patient data — a working model of the process, not a compliant deployment'
+          ]
+        }
+      ]
     }
   ];
 
