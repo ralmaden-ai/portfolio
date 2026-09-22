@@ -101,9 +101,53 @@ h1, h2, h3,
 .nav-logo {
   display: flex;
   align-items: center;
+  gap: 0.625rem;
   flex-shrink: 0;
   text-decoration: none;
   color: var(--text);
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.nav-logo .logo-word {
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--text) 75%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-dot {
+  -webkit-text-fill-color: var(--primary);
+  font-weight: 700;
+  transition: -webkit-text-fill-color 0.2s ease;
+}
+
+.nav-logo:hover .logo-dot {
+  -webkit-text-fill-color: var(--primary-hover);
+}
+
+.logo-tagline {
+  font-family: var(--font-heading);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.logo-tagline span {
+  color: var(--primary);
+  font-weight: 400;
+  margin: 0 0.2em;
 }
 
 .logo-word {
@@ -1005,6 +1049,127 @@ h1, h2, h3,
   margin-right: auto;
 }
 
+/* Progressive disclosure inside the project modal. The case study reads on
+   its own; everything deeper sits behind this toggle so a client is not
+   handed the engineering writeup before the pitch. */
+.detail-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 2.5rem 0 0 0;
+  padding: 0.875rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.detail-more-btn:hover {
+  background: rgba(124, 58, 237, 0.14);
+  border-color: var(--primary);
+}
+
+.detail-more-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.detail-more-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.detail-more-btn[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.project-detail-deep[hidden] {
+  display: none !important;
+}
+
+[data-theme="dark"] .detail-more-btn {
+  background: rgba(167, 139, 250, 0.12);
+  border-color: #2D2D44;
+}
+
+[data-theme="dark"] .detail-more-btn:hover {
+  background: rgba(167, 139, 250, 0.2);
+  border-color: var(--primary);
+}
+
+/* Platform filter above the projects grid. Pill shape and violet active
+   state reuse the tech-tag / badge language used elsewhere. */
+.project-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.625rem;
+  margin: -2.5rem 0 3rem 0;
+}
+
+.project-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  padding: 0.5rem 1.125rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.project-filter:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.project-filter.active {
+  color: #FFFFFF;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.project-filter:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.project-filter-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.project-card[hidden] {
+  display: none;
+}
+
+[data-theme="dark"] .project-filter {
+  border-color: #2D2D44;
+}
+
+[data-theme="dark"] .project-filter:hover {
+  background: rgba(167, 139, 250, 0.12);
+}
+
+[data-theme="dark"] .project-filter.active {
+  color: #0F0F1A;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -1171,6 +1336,19 @@ h1, h2, h3,
   color: var(--text-muted);
   margin: 0;
   flex: 1;
+}
+
+.project-card-line {
+  display: block;
+}
+
+.project-card-line + .project-card-line {
+  margin-top: 0.45rem;
+}
+
+.project-card-line strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .project-card-link {
@@ -1695,7 +1873,9 @@ h1, h2, h3,
 
 /* Detail modal — decisions */
 .project-detail-decisions,
-.project-detail-status {
+.project-detail-status,
+.project-detail-learned,
+.project-detail-technical {
   grid-column: 1 / -1;
   padding: 0 2.5rem 2rem;
 }
@@ -1840,7 +2020,9 @@ h1, h2, h3,
   .project-detail-workflow,
   .project-detail-concept,
   .project-detail-decisions,
-  .project-detail-status {
+  .project-detail-status,
+  .project-detail-learned,
+  .project-detail-technical {
     padding: 0 1.5rem 1.5rem;
   }
 
@@ -2643,6 +2825,48 @@ h1, h2, h3,
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
+}
+
+/* A single testimonial shouldn't stretch the full grid width. */
+.testimonials-single {
+  grid-template-columns: 1fr;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Attribution with a photo sits on one row rather than stacking. */
+.testimonial footer.testimonial-author {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+/* Circular frame from a 3:4 portrait. The square crop takes the full width of
+   the source and sits at the top of the frame, which is where her head is, so
+   nothing is zoomed and the whole head stays inside the circle. */
+.testimonial-avatar {
+  display: block;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border);
+}
+
+[data-theme="dark"] .testimonial-avatar {
+  border-color: #2D2D44;
+}
+
+.testimonial-author-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+[data-theme="dark"] .testimonial-avatar {
+  border-color: #2D2D44;
 }
 
 .testimonial strong {
