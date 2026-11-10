@@ -1,64 +1,113 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-
+  // The initial theme is set by the inline script in <head>, before first
+  // paint; this only handles the toggle.
   const themeToggle = document.getElementById('theme-toggle');
   const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+    // The calendar is deliberately not redrawn here: Calendly's free plan
+    // ignores colour parameters, and a redraw would wipe a half-finished
+    // booking.
   }
 
   themeToggle.addEventListener('click', toggleTheme);
   themeToggleMobile.addEventListener('click', toggleTheme);
 
-  // Calendly inline widget — initialized manually (rather than via its
-  // auto-scanning class/data-url) so the calendar's own colors can match
-  // whichever theme is active on first load. window.Calendly isn't
-  // guaranteed to exist the instant this handler runs (ad blockers and
-  // privacy extensions commonly block calendly.com's script outright, and
-  // even when it loads, its own internal setup can land after
-  // DOMContentLoaded) — so this polls briefly instead of checking once,
-  // and falls back to a plain link rather than leaving the loading
-  // spinner stuck on-screen forever if Calendly never becomes available.
+  // Calendly inline widget. Its script is only fetched when the contact
+  // section comes near the viewport, so the first page load never pays for
+  // it. The calendar draws into its own box (.calendly-frame) underneath a
+  // status overlay. The overlay shows "Loading..." until Calendly reports it
+  // has actually drawn; if that hasn't happened after 15 seconds (script
+  // blocked, or the calendar blocked inside a loaded script), the same
+  // overlay switches to a direct booking link at the same height, so the
+  // page never jumps. A calendar that draws late still replaces it.
   const calendlyEmbed = document.getElementById('calendlyEmbed');
+  const calendlyStatus = calendlyEmbed && calendlyEmbed.querySelector('.calendly-status');
   const calendlyUrl = 'https://calendly.com/reymarcalmaden704/30min';
+  let calendlyRequested = false;
+  let calendlyDrawn = false;
 
-  function tryInitCalendly(attemptsLeft) {
-    if (!calendlyEmbed) return;
-    if (window.Calendly) {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      const colors = isDark
-        ? { bg: '0f0f0f', text: 'f5f5f4', primary: 'a78bfa' }
-        : { bg: 'fafaf9', text: '1a1a1a', primary: '7c3aed' };
-      calendlyEmbed.innerHTML = '';
-      Calendly.initInlineWidget({
-        url: `${calendlyUrl}?primary_color=${colors.primary}&text_color=${colors.text}&background_color=${colors.bg}&hide_gdpr_banner=1`,
-        parentElement: calendlyEmbed
-      });
-      return;
-    }
-    if (attemptsLeft > 0) {
-      setTimeout(() => tryInitCalendly(attemptsLeft - 1), 200);
-      return;
-    }
-    // Gave up after ~8 seconds — show a direct link instead of a dead spinner.
-    calendlyEmbed.innerHTML = `
-      <div class="calendly-fallback">
-        <p>The live calendar didn't load. This can happen with an ad blocker or privacy extension active.</p>
-        <a href="${calendlyUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Open the booking calendar</a>
-      </div>
-    `;
+  function initCalendly() {
+    if (!calendlyEmbed || !window.Calendly) return;
+    const frame = document.createElement('div');
+    frame.className = 'calendly-frame';
+    calendlyEmbed.appendChild(frame);
+    Calendly.initInlineWidget({
+      url: calendlyUrl + '?hide_gdpr_banner=1',
+      parentElement: frame
+    });
   }
 
+  function markCalendlyDrawn() {
+    if (calendlyDrawn) return;
+    calendlyDrawn = true;
+    if (calendlyStatus) calendlyStatus.remove();
+  }
+
+  function showCalendlyFallback() {
+    if (calendlyDrawn || !calendlyStatus) return;
+    calendlyStatus.className = 'calendly-status calendly-fallback';
+    calendlyStatus.innerHTML =
+      '<p>The live calendar didn\'t load. This can happen with an ad blocker or privacy extension active.</p>' +
+      '<a href="' + calendlyUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Open the booking calendar</a>';
+  }
+
+  function loadCalendly() {
+    if (calendlyRequested) return;
+    calendlyRequested = true;
+
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://assets.calendly.com/assets/external/widget.css';
+    document.head.appendChild(css);
+
+    setTimeout(showCalendlyFallback, 15000);
+    const script = document.createElement('script');
+    script.src = 'https://assets.calendly.com/assets/external/widget.js';
+    script.async = true;
+    script.onload = initCalendly;
+    script.onerror = showCalendlyFallback;
+    document.body.appendChild(script);
+  }
+
+  // Calendly reports its content height as the visitor moves from date to
+  // time to form; sizing the embed to it removes the inner scrollbar and the
+  // empty space. Until a height arrives, CSS supplies a sensible default.
+  window.addEventListener('message', event => {
+    if (event.origin !== 'https://calendly.com' || !calendlyEmbed) return;
+    const data = event.data;
+    // Either of these means the calendar inside the iframe has rendered.
+    if (data && (data.event === 'calendly.event_type_viewed' || data.event === 'calendly.profile_page_viewed')) {
+      markCalendlyDrawn();
+    }
+    if (data && data.event === 'calendly.page_height' && data.payload && data.payload.height) {
+      // Calendly also posts tiny transient heights (2px, 26px) while it
+      // boots; ignore those so the box doesn't collapse mid-load.
+      const height = parseInt(data.payload.height, 10);
+      if (height >= 300) {
+        calendlyEmbed.style.height = height + 'px';
+        markCalendlyDrawn();
+      }
+    }
+  });
+
   if (calendlyEmbed) {
-    tryInitCalendly(40);
+    if ('IntersectionObserver' in window) {
+      const calendlyObserver = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          calendlyObserver.disconnect();
+          loadCalendly();
+        }
+      }, { rootMargin: '800px 0px' });
+      calendlyObserver.observe(calendlyEmbed);
+    } else {
+      loadCalendly();
+    }
   }
 
   // Rotating roles animation
@@ -71,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
     roles[currentRoleIndex].classList.add('active');
   }
 
-  if (roles.length > 1) {
+  // Reduced motion: the first role stays put instead of cycling every 3s.
+  if (roles.length > 1 && !prefersReducedMotion) {
     setInterval(rotateRoles, 3000);
   }
 
@@ -123,28 +173,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const navToggle = document.querySelector('.nav-toggle');
   const navMenu = document.querySelector('.nav-menu');
 
-  navToggle.addEventListener('click', () => {
-    navMenu.classList.toggle('active');
+  function setMenuOpen(open) {
+    navMenu.classList.toggle('active', open);
+    navToggle.setAttribute('aria-expanded', String(open));
+    navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
     const spans = navToggle.querySelectorAll('span');
-    if (navMenu.classList.contains('active')) {
-      spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-      spans[1].style.opacity = '0';
-      spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
-    } else {
-      spans[0].style.transform = '';
-      spans[1].style.opacity = '';
-      spans[2].style.transform = '';
-    }
+    spans[0].style.transform = open ? 'rotate(45deg) translate(5px, 5px)' : '';
+    spans[1].style.opacity = open ? '0' : '';
+    spans[2].style.transform = open ? 'rotate(-45deg) translate(5px, -5px)' : '';
+  }
+
+  navToggle.addEventListener('click', () => {
+    setMenuOpen(!navMenu.classList.contains('active'));
   });
 
   document.querySelectorAll('.nav-menu a').forEach(link => {
-    link.addEventListener('click', () => {
-      navMenu.classList.remove('active');
-      const spans = navToggle.querySelectorAll('span');
-      spans[0].style.transform = '';
-      spans[1].style.opacity = '';
-      spans[2].style.transform = '';
-    });
+    link.addEventListener('click', () => setMenuOpen(false));
   });
 
   const reveals = document.querySelectorAll('.reveal');
@@ -176,14 +220,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.scrollTo({
           top: offsetPosition,
-          behavior: 'smooth'
+          behavior: prefersReducedMotion ? 'auto' : 'smooth'
         });
       }
     });
   });
 
-  // Animated counters
-  const counters = document.querySelectorAll('.stats-row .stat-number[data-target]');
+  // Animated counters. The markup carries the real numbers so crawlers, link
+  // previews and no-JS visitors never read "0"; they are reset to 0 here and
+  // counted up once visible. Reduced-motion visitors just keep the number.
+  const counters = prefersReducedMotion
+    ? []
+    : document.querySelectorAll('.stats-row .stat-number[data-target]');
+  counters.forEach(counter => { counter.textContent = '0'; });
   const counterObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -211,29 +260,112 @@ document.addEventListener('DOMContentLoaded', () => {
 
   counters.forEach(counter => counterObserver.observe(counter));
 
-  // Close modals with Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      // Close certifications grid lightbox — if it's open, close only that
-      // and leave the project detail modal (if any) open underneath it.
-      const certGridLightbox = document.getElementById('certGridLightbox');
-      if (certGridLightbox && certGridLightbox.classList.contains('active')) {
-        certGridLightbox.classList.remove('active');
-        const certGridLightboxImage = document.getElementById('certGridLightboxImage');
-        if (certGridLightboxImage) certGridLightboxImage.src = '';
+  // Logo marquee pause control (WCAG 2.2.2: moving content can be stopped).
+  const marqueeToggle = document.getElementById('marqueeToggle');
+  const marqueeWrap = document.querySelector('.marquee-wrap');
+  if (marqueeToggle && marqueeWrap) {
+    marqueeToggle.addEventListener('click', () => {
+      const paused = marqueeWrap.classList.toggle('is-paused');
+      marqueeToggle.setAttribute('aria-pressed', String(paused));
+      marqueeToggle.querySelector('.marquee-toggle-label').textContent =
+        paused ? 'Resume scrolling' : 'Pause scrolling';
+    });
+  }
 
-        const projectDetailModalOpen = document.getElementById('projectDetailModal');
-        if (!projectDetailModalOpen || !projectDetailModalOpen.classList.contains('active')) {
-          document.body.style.overflow = '';
-        }
+  // ---- Dialogs (project detail + image lightbox) ----
+  // A small stack so the lightbox can open over the project modal. Each open
+  // dialog pushes a history entry, so the phone's Back button closes it
+  // instead of leaving the site. Focus moves in on open, is trapped while
+  // open, and returns to whatever opened it on close.
+  const dialogStack = [];
+  let ignoreNextPop = false;
+  let lockedScrollY = 0;
+
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+  const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+  function lockScroll() {
+    lockedScrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${lockedScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+  }
+
+  function unlockScroll() {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    window.scrollTo({ top: lockedScrollY, behavior: 'instant' });
+  }
+
+  function openDialog(el, initialFocus) {
+    if (dialogStack.some(d => d.el === el)) return;
+    if (!dialogStack.length) lockScroll();
+    dialogStack.push({ el, returnTo: document.activeElement });
+    el.classList.add('active');
+    history.pushState({ dialog: el.id }, '');
+    (initialFocus || el).focus({ preventScroll: true });
+  }
+
+  // fromHistory: closed by the Back button, so the history entry is gone already.
+  function closeDialog(el, { restoreFocus = true, fromHistory = false } = {}) {
+    const index = dialogStack.findIndex(d => d.el === el);
+    if (index === -1) return;
+    const [entry] = dialogStack.splice(index, 1);
+    el.classList.remove('active');
+    if (!dialogStack.length) unlockScroll();
+    if (!fromHistory) {
+      ignoreNextPop = true;
+      history.back();
+    }
+    if (restoreFocus && entry.returnTo && document.contains(entry.returnTo)) {
+      entry.returnTo.focus({ preventScroll: true });
+    }
+    if (el.id === 'certGridLightbox') {
+      const img = document.getElementById('certGridLightboxImage');
+      if (img) img.removeAttribute('src');
+      el.classList.remove('can-zoom', 'is-zoomed');
+    }
+  }
+
+  window.addEventListener('popstate', () => {
+    if (ignoreNextPop) {
+      ignoreNextPop = false;
+      return;
+    }
+    const top = dialogStack[dialogStack.length - 1];
+    if (top) closeDialog(top.el, { fromHistory: true });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const top = dialogStack[dialogStack.length - 1];
+    if (!top) return;
+
+    // Escape closes only the topmost dialog (the lightbox before the modal).
+    if (e.key === 'Escape') {
+      closeDialog(top.el);
+      return;
+    }
+
+    // Keep Tab inside the open dialog.
+    if (e.key === 'Tab') {
+      const items = [...top.el.querySelectorAll(FOCUSABLE)]
+        .filter(item => item.getClientRects().length > 0 || item === document.activeElement);
+      if (!items.length) {
+        e.preventDefault();
         return;
       }
-
-      // Also close project detail modal
-      const projectDetailModal = document.getElementById('projectDetailModal');
-      if (projectDetailModal && projectDetailModal.classList.contains('active')) {
-        projectDetailModal.classList.remove('active');
-        document.body.style.overflow = '';
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !top.el.contains(document.activeElement))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !top.el.contains(document.activeElement))) {
+        e.preventDefault();
+        first.focus();
       }
     }
   });
@@ -245,11 +377,11 @@ document.addEventListener('DOMContentLoaded', () => {
       category: 'Voice AI Call Routing',
       platform: 'n8n + VAPI + GHL',
       title: 'Urgent Care Voice Receptionist for Call Routing',
-      description: "A demo of a voice assistant for an urgent care clinic. Maya answers the phone, looks up the caller, works out which department they need from how they describe the problem, and either transfers them or files a callback task for a real person in the CRM. Every routing decision is recorded so it can be checked afterwards.",
+      description: "A voice assistant for an urgent care clinic. Maya answers the phone, looks up the caller, works out which department they need from how they describe the problem, and either transfers them or files a callback task for a real person in the CRM. Every routing decision is recorded so it can be checked afterwards.",
       tags: ['n8n', 'VAPI', 'Groq', 'Google Sheets', 'GoHighLevel'],
       image: 'assets/projects/northshore-receptionist.png',
       caseStudy: {
-        client: 'Demo build: urgent care clinic',
+        client: 'Urgent care clinic',
         situation: "An urgent care front desk answers the same handful of calls all day: billing, test results, wait times, occupational health, and now and then someone who needs a nurse. Every call arrives on one line, and someone has to work out in seconds where it should go.",
         breaking: "A phone menu makes callers press through options that never quite fit. An answering service cannot see who is calling or judge what is urgent. And afterwards, there is no way to check whether a call went to the right place.",
         built: "A voice assistant called Maya that answers the phone, works out which department the caller needs from what they say, and transfers them if that department is open. If she cannot, a callback task goes to a real person in the CRM. Every routing decision is recorded so you can check it afterwards.",
@@ -360,11 +492,11 @@ document.addEventListener('DOMContentLoaded', () => {
       category: 'Voice AI Receptionist',
       platform: 'n8n + VAPI',
       title: 'Voice Receptionist for Service Bookings',
-      description: "A demo of a voice assistant for a heating, cooling and plumbing company. It answers the phone, checks the real calendar, books the job into a free two-hour window, cancels a booking from a reference number, and raises the alarm for a genuine emergency. No menus, no \"press 1\", and no call that ends without a record.",
+      description: "A voice assistant for a heating, cooling and plumbing company. It answers the phone, checks the real calendar, books the job into a free two-hour window, cancels a booking from a reference number, and raises the alarm for a genuine emergency. No menus, no \"press 1\", and no call that ends without a record.",
       tags: ['n8n', 'VAPI', 'Google Calendar', 'Google Sheets', 'Voice AI'],
       image: 'assets/projects/ai-receptionist.png',
       caseStudy: {
-        client: 'Demo build: heating, cooling and plumbing company',
+        client: 'Heating, cooling and plumbing company',
         situation: "A trades business loses work on the phone. Calls arrive while every technician is on a job, they ring out, and the customer calls the next company. The ones that are answered are mostly routine, and each still takes up whoever picked up.",
         breaking: "An answering service takes a message but cannot see the calendar, so nothing is booked until someone calls back. The hard part is finishing the job on the call: reading the real schedule, putting a real appointment in it, and knowing which call is the burst pipe.",
         built: "A voice assistant that answers the phone, offers two-hour windows that are genuinely free, and books the job while the caller is on the line. Every booking gets a reference number for cancelling later, an emergency triggers an urgent alert to the office, and any other call is saved as a lead so nothing ends without a record.",
@@ -481,11 +613,11 @@ document.addEventListener('DOMContentLoaded', () => {
       category: 'AI Automation',
       platform: 'n8n',
       title: 'Messenger Assistant for Business FAQs',
-      description: 'A demo of a Facebook Messenger assistant for a small business. It answers customer questions about hours, prices, services and availability using one document the owner keeps up to date, and it remembers earlier messages in the conversation so follow-up questions make sense.',
+      description: 'A Facebook Messenger assistant for a small business. It answers customer questions about hours, prices, services and availability using one document the owner keeps up to date, and it remembers earlier messages in the conversation so follow-up questions make sense.',
       tags: ['n8n', 'Google Gemini', 'AI Agent'],
       image: 'assets/projects/facebook-chatbot.png',
       caseStudy: {
-        client: 'Demo build: small business Messenger inbox',
+        client: 'Small business Messenger inbox',
         situation: "A small business gets the same questions on Messenger all day: opening hours, prices, what you offer, whether Saturday is free. Many arrive in the evening or at the weekend, when nobody is watching the inbox.",
         breaking: "Replies depend on someone noticing and typing an answer, and a customer who waits too long asks somewhere else. A generic auto-reply does not help, because it cannot answer the actual question, and any automated answer has to be right for this business.",
         built: "An assistant that answers Messenger questions from one document the business keeps up to date, and remembers earlier messages so follow-up questions make sense. Changing what it says means editing the document. Nothing else needs touching.",
@@ -560,11 +692,11 @@ document.addEventListener('DOMContentLoaded', () => {
       category: '7-Workflow System',
       platform: 'n8n',
       title: 'Medical Records Retrieval Automation',
-      description: "A demo of a records retrieval system, drawn from my time doing this job by hand. Seven automations pass each case from first request to closed file, stopping for a person at every point where someone genuinely needs to decide.",
+      description: "A records retrieval system, drawn from my time doing this job by hand. Seven automations pass each case from first request to closed file, stopping for a person at every point where someone genuinely needs to decide.",
       tags: ['n8n', 'Groq AI', 'Airtable', 'Webhooks', 'Human-in-the-Loop'],
       image: 'assets/projects/medical-records-retrieval.png',
       caseStudy: {
-        client: 'Demo build: medical records retrieval team',
+        client: 'Medical records retrieval team',
         situation: "A records retrieval team handles dozens of open requests at once, each with a deadline. For every case, someone checks the facility details by hand, sends the request, remembers to follow up, and reads every reply to work out what happens next.",
         breaking: "None of it connects. Case status lives in a spreadsheet or in someone's head, follow-ups depend on memory, and there is no reliable record of what was sent, when, and who approved it. In healthcare, that record is the part that matters most.",
         built: "Seven automations that pass a case from first request to closed file: verify the facility, draft the request, chase on a schedule that matches the urgency, read the reply, and check what arrived. Wherever real judgement is needed (a doubtful match, a request about to go out, a denied reply, the final sign-off) it stops and waits for a person. Every step is written to a log for that case.",
@@ -664,11 +796,11 @@ document.addEventListener('DOMContentLoaded', () => {
       category: 'AI Automation',
       platform: 'n8n',
       title: 'Lead Follow-Up System for Lost Leads',
-      description: 'A demo of an automatic follow-up sequence for a business that gets leads through a website form. Every new lead gets a personal confirmation, a follow-up three days later if they have not replied, and one more after that, with the status of every lead logged so you can see where each one stands.',
+      description: 'An automatic follow-up sequence for a business that gets leads through a website form. Every new lead gets a personal confirmation, a follow-up three days later if they have not replied, and one more after that, with the status of every lead logged so you can see where each one stands.',
       tags: ['n8n', 'Groq AI', 'Google Sheets'],
       image: 'assets/projects/lead-followup-system.png',
       caseStudy: {
-        client: 'Demo build: service business with a website enquiry form',
+        client: 'Service business with a website enquiry form',
         situation: "A business that gets leads through a form usually sends one confirmation and then moves on. Whether anyone follows up depends on someone checking the inbox and remembering who has gone quiet.",
         breaking: "The leads that do not reply straight away are the ones most likely to be forgotten, and they are often the ones who just needed a nudge. Tracking who replied and when to chase them does not scale past a handful of leads.",
         built: "Every new lead is logged the moment the form is submitted and gets a personal confirmation written from the details they gave. If they have not replied after three days, a follow-up goes out, then one more, and then the lead is marked closed rather than chased forever. Every step is written to a log so you can see where each lead stands.",
@@ -744,17 +876,17 @@ document.addEventListener('DOMContentLoaded', () => {
       category: 'Booking Funnel',
       platform: 'GoHighLevel',
       title: 'Fitness Funnel for Lead Booking',
-      description: "A demo of a booking funnel for a fitness studio. A visitor books a consultation, gets a confirmation straight away, and then three reminders before the session, each one checking first that the booking is still on.",
+      description: "A booking funnel for a fitness studio. A visitor books a consultation, gets a confirmation straight away, and then three reminders before the session, each one checking first that the booking is still on.",
       tags: ['GoHighLevel', 'Appointment Reminders', 'Appointment Booking', 'CRM Pipelines'],
       image: 'assets/projects/peak-performance-workflow.png',
       imageFull: 'assets/projects/full/peak-performance-workflow.png',
       caseStudy: {
-        client: 'Demo build: fitness studio',
+        client: 'Fitness studio',
         situation: "A fitness studio gets sign-ups from its website, but a sign-up is not a booked session. Some people never book. Some book and do not turn up. Reminding them depends on the owner remembering to text the day before.",
         breaking: "Leads drop out between signing up and booking, and no-shows eat the sessions that do get booked. The owner remembering to text people works until the day it gets busy, which is exactly when a no-show costs the most.",
         built: "A booking funnel where every booked session triggers a confirmation, then three reminders: a day before, twelve hours before, and four hours before. Before each reminder, the system checks the booking is still on, so someone who cancelled yesterday does not get chased for a session that is not happening. The pipeline updates itself as people move from sign-up to booked.",
-        changed: "Every booked session gets a confirmation and three reminders without the owner sending any of them, and a cancelled session stops the reminders on its own. This was built in a demo account and has not run with real members, so there are no numbers on no-shows. Live, I would measure the no-show rate before and after, and how many sign-ups go on to book.",
-        technical: "Built in GoHighLevel. The funnel (a landing page with a consultation form and an appointment calendar) feeds a pipeline; when a session is booked, the workflow tags the contact Appointment Booked, strips stale Cancelled / Lost / No-Show tags from any previous booking, moves the opportunity to the Booked stage, and sends a confirmation email. A three-stage reminder cascade then waits until 24, 12 and 4 hours before the appointment start, with a condition check before each send (tag still present and appointment date still valid) so reminders never fire for a contact who cancelled or no-showed. Built and configured in a demo sub-account; not tested with live bookings."
+        changed: "Every booked session gets a confirmation and three reminders without the owner sending any of them, and a cancelled session stops the reminders on its own. This was built in a test account and has not run with real members, so there are no numbers on no-shows. Live, I would measure the no-show rate before and after, and how many sign-ups go on to book.",
+        technical: "Built in GoHighLevel. The funnel (a landing page with a consultation form and an appointment calendar) feeds a pipeline; when a session is booked, the workflow tags the contact Appointment Booked, strips stale Cancelled / Lost / No-Show tags from any previous booking, moves the opportunity to the Booked stage, and sends a confirmation email. A three-stage reminder cascade then waits until 24, 12 and 4 hours before the appointment start, with a condition check before each send (tag still present and appointment date still valid) so reminders never fire for a contact who cancelled or no-showed. Built and configured in a test sub-account; not tested with live bookings."
       },
       stats: [
         { n: '3', l: 'Reminders per booking' },
@@ -823,17 +955,17 @@ document.addEventListener('DOMContentLoaded', () => {
       category: 'Lead Generation',
       platform: 'GoHighLevel',
       title: 'Real Estate CRM for Lead Routing',
-      description: "A demo of a lead routing system for a real estate brokerage. A homeowner requests a valuation, and the CRM sorts them as a buyer, seller or both, places them in the right pipeline, sends a confirmation, and alerts the assigned agent, all before anyone has read the enquiry.",
+      description: "A lead routing system for a real estate brokerage. A homeowner requests a valuation, and the CRM sorts them as a buyer, seller or both, places them in the right pipeline, sends a confirmation, and alerts the assigned agent, all before anyone has read the enquiry.",
       tags: ['GoHighLevel', 'CRM Pipelines', 'Landing Pages', 'Real Estate'],
       image: 'assets/projects/harbor-vale-workflow.png',
       imageFull: 'assets/projects/full/harbor-vale-workflow.png',
       caseStudy: {
-        client: 'Demo build: real estate brokerage',
+        client: 'Real estate brokerage',
         situation: "A brokerage gets enquiries through its website all day: people wanting to sell, people wanting to buy, and people doing both at once. They all land in the same inbox, and the first agent to respond usually wins the listing.",
         breaking: "Before any follow-up can start, someone has to read each enquiry, work out what the person wants, and forward it to the right agent. That gap between \"form submitted\" and \"agent knows\" is where listings are lost.",
         built: "A home valuation page that asks the one question everything depends on: are you looking to buy, sell, or both. The CRM reads that answer and sorts the lead into the right pipeline, sends a confirmation, and alerts the assigned agent, so the first thing the agent does is follow up rather than triage. Buyer-and-seller leads get their own path, because someone selling one home and buying the next is the most valuable enquiry a brokerage gets.",
-        changed: "A new lead is sorted and with the right agent the moment they submit, instead of sitting unread in a shared inbox. This was built in a demo account and has not run with real enquiries, so there are no response-time numbers. Live, I would measure the time from form submission to first agent contact, and how many leads end up in the wrong pipeline.",
-        technical: "Built in GoHighLevel: a home valuation landing page feeding a nine-workflow automation system; the New Lead Intake workflow is the one documented here. It reads the \"I'm looking to\" field from the form and branches three ways (Buy, Sell, Both), tags the contact accordingly (Buyer, Seller, or Buyer + Seller), creates the opportunity in the matching pipeline at the New Lead stage, sends an automatic confirmation email, and notifies the assigned agent. Routing is driven by the explicit form answer rather than inferred from free text, so a wrong route traces back to the form asking badly, which is fixable. Built and configured in a demo sub-account; not tested with live enquiries."
+        changed: "A new lead is sorted and with the right agent the moment they submit, instead of sitting unread in a shared inbox. This was built in a test account and has not run with real enquiries, so there are no response-time numbers. Live, I would measure the time from form submission to first agent contact, and how many leads end up in the wrong pipeline.",
+        technical: "Built in GoHighLevel: a home valuation landing page feeding a nine-workflow automation system; the New Lead Intake workflow is the one documented here. It reads the \"I'm looking to\" field from the form and branches three ways (Buy, Sell, Both), tags the contact accordingly (Buyer, Seller, or Buyer + Seller), creates the opportunity in the matching pipeline at the New Lead stage, sends an automatic confirmation email, and notifies the assigned agent. Routing is driven by the explicit form answer rather than inferred from free text, so a wrong route traces back to the form asking badly, which is fixable. Built and configured in a test sub-account; not tested with live enquiries."
       },
       stats: [
         { n: '9', l: 'Workflows built' },
@@ -902,11 +1034,11 @@ document.addEventListener('DOMContentLoaded', () => {
       category: '5-Module System',
       platform: 'n8n',
       title: 'Automation Hub for Business Operations',
-      description: "A demo of an automation hub for a business group with several divisions. Five weekly routines that used to mean someone opening spreadsheets and writing emails now run on their own schedule and email the right person.",
+      description: "An automation hub for a business group with several divisions. Five weekly routines that used to mean someone opening spreadsheets and writing emails now run on their own schedule and email the right person.",
       tags: ['n8n', 'Groq AI', 'Google Sheets', 'Gmail API', 'Serper.dev'],
       image: 'assets/projects/au-business-hub.png',
       caseStudy: {
-        client: 'Demo build: multi-division business group',
+        client: 'Multi-division business group',
         situation: "A business group with several divisions runs on a handful of weekly routines. Someone compiles the operations report from each division's spreadsheet, chases leads that have gone quiet, chases unpaid invoices, checks which projects have slipped, and reads up on the industry.",
         breaking: "None of these connect. The same information is re-entered across spreadsheets and emails every week, a lead or an invoice can be chased twice or not at all, and the routines only happen if the person doing them is not busy with something else.",
         built: "Five automations, each doing the same thing in the same order: read the spreadsheet, find the rows that need attention, write the email in plain English, send it, then mark the row so it is never chased twice. One compiles the weekly report from five division sheets. One chases quiet leads. One chases overdue invoices. One flags projects running late. One searches the web and writes an industry digest. Adding a sixth routine is a copy of an existing one with different filters.",
@@ -1010,14 +1142,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mainImage = document.getElementById('projectDetailMainImage');
     mainImage.src = project.image;
-    mainImage.alt = project.title;
+    // Describe the screenshot itself (the card's alt), not just repeat the title.
+    const cardImage = document.querySelectorAll('.project-card')[index]?.querySelector('img');
+    mainImage.alt = (cardImage && cardImage.alt) || project.title;
 
     // Zoom pulls the full-resolution original where one exists — it is only
     // fetched on click, so the heavy file never costs anything on scroll.
     const zoomBtn = document.getElementById('projectDetailZoomBtn');
     zoomBtn.onclick = function(event) {
       event.stopPropagation();
-      window.openCertLightbox(project.imageFull || project.image);
+      window.openCertLightbox(project.imageFull || project.image, mainImage.alt);
     };
 
     const liveBtn = document.getElementById('projectDetailLiveBtn');
@@ -1248,50 +1382,117 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('projectDetailMoreLabel').textContent = 'Show the technical detail';
     }
 
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    const panel = modal.querySelector('.project-detail-panel');
+    panel.scrollTop = 0;
+    openDialog(modal, modal.querySelector('.project-detail-close'));
   };
 
-  window.closeProjectDetail = function(event) {
+  // With an event, only the backdrop or the ✕ closes it; called with no
+  // event (footer buttons), it always closes.
+  window.closeProjectDetail = function(event, options) {
     const modal = document.getElementById('projectDetailModal');
     if (!modal) return;
-
-    if (event.target === modal || event.target.closest('.project-detail-close')) {
-      modal.classList.remove('active');
-      document.body.style.overflow = '';
-    }
+    if (event && event.target !== modal && !event.target.closest('.project-detail-close')) return;
+    closeDialog(modal, options);
   };
 
-  // Certifications Grid Lightbox (for the new Certifications section)
-  window.openCertLightbox = function(imageSrc) {
+  // Full-size image lightbox: certificates, funnel designs and the project
+  // modal's zoom button all open it.
+  // `label` is either the alt text to use, or the clicked card button, whose
+  // card image already carries a description.
+  window.openCertLightbox = function(imageSrc, label) {
     const lightbox = document.getElementById('certGridLightbox');
     const lightboxImage = document.getElementById('certGridLightboxImage');
+    let description = typeof label === 'string' ? label : '';
+    if (label instanceof Element) {
+      const cardImage = label.closest('.funnel-card, .cert-card')?.querySelector('img');
+      description = cardImage ? cardImage.alt : '';
+    }
+    if (lightboxImage) {
+      lightboxImage.alt = description ? description + ', full size' : 'Full-size image';
+    }
 
     if (lightbox && lightboxImage) {
+      // Full-size workflow screenshots run to a few MB, so show a spinner
+      // until the image has actually arrived instead of an empty backdrop.
+      lightbox.classList.remove('can-zoom', 'is-zoomed');
+      lightbox.scrollTop = 0;
+      lightbox.classList.add('is-loading');
+      const done = () => {
+        lightbox.classList.remove('is-loading');
+        setupLightboxZoom(lightbox, lightboxImage);
+      };
+      lightboxImage.onload = done;
+      lightboxImage.onerror = done;
       lightboxImage.src = imageSrc;
-      lightbox.classList.add('active');
-      document.body.style.overflow = 'hidden';
+      if (lightboxImage.complete && lightboxImage.naturalWidth) done();
+      openDialog(lightbox, lightbox.querySelector('.cert-grid-lightbox-close'));
     }
   };
+
+  // Zoom for tall images (landing pages, long workflows). Fitted to the
+  // screen they shrink to a sliver, so they open at a readable width and
+  // scroll like a real page; the button or a click on the image switches
+  // between that and the whole-page overview. Images that already show near
+  // full size get no zoom at all.
+  const lightboxZoomBtn = document.getElementById('certGridLightboxZoom');
+  const lightboxZoomLabel = lightboxZoomBtn && lightboxZoomBtn.querySelector('.cert-grid-lightbox-zoom-label');
+
+  function setLightboxZoom(lightbox, zoomed, focusY) {
+    const img = document.getElementById('certGridLightboxImage');
+    lightbox.classList.toggle('is-zoomed', zoomed);
+    if (lightboxZoomBtn) lightboxZoomBtn.setAttribute('aria-pressed', String(zoomed));
+    if (lightboxZoomLabel) lightboxZoomLabel.textContent = zoomed ? 'Fit to screen' : 'Zoom in';
+    if (zoomed && img && typeof focusY === 'number') {
+      // Land on the part that was clicked rather than the top of the page.
+      const rect = img.getBoundingClientRect();
+      const viewTop = img.offsetTop;
+      lightbox.scrollTop = Math.max(0, viewTop + focusY * rect.height - window.innerHeight / 2);
+    } else if (!zoomed) {
+      lightbox.scrollTop = 0;
+    }
+  }
+
+  function setupLightboxZoom(lightbox, img) {
+    if (!img.naturalWidth) return;
+    // Measure the fitted size, then decide whether zooming would help.
+    lightbox.classList.remove('is-zoomed');
+    const fittedWidth = img.getBoundingClientRect().width;
+    const readableWidth = Math.min(img.naturalWidth, 1200, lightbox.clientWidth);
+    const canZoom = readableWidth > fittedWidth * 1.4;
+    lightbox.classList.toggle('can-zoom', canZoom);
+    // Tall pages start zoomed: that is the view people opened them for.
+    const tall = img.naturalHeight / img.naturalWidth > 1.5;
+    setLightboxZoom(lightbox, canZoom && tall);
+  }
+
+  if (lightboxZoomBtn) {
+    lightboxZoomBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      const lightbox = document.getElementById('certGridLightbox');
+      setLightboxZoom(lightbox, !lightbox.classList.contains('is-zoomed'));
+    });
+  }
+
+  const lightboxImageEl = document.getElementById('certGridLightboxImage');
+  if (lightboxImageEl) {
+    lightboxImageEl.addEventListener('click', event => {
+      const lightbox = document.getElementById('certGridLightbox');
+      if (!lightbox.classList.contains('can-zoom')) return;
+      const zooming = !lightbox.classList.contains('is-zoomed');
+      const rect = lightboxImageEl.getBoundingClientRect();
+      const focusY = (event.clientY - rect.top) / rect.height;
+      setLightboxZoom(lightbox, zooming, zooming ? focusY : undefined);
+    });
+  }
 
   window.closeCertGridLightbox = function(event) {
     const lightbox = document.getElementById('certGridLightbox');
-    const lightboxImage = document.getElementById('certGridLightboxImage');
-
     if (!lightbox) return;
 
     // Close if clicked on backdrop or close button
     if (event.target === lightbox || event.target.closest('.cert-grid-lightbox-close')) {
-      lightbox.classList.remove('active');
-      if (lightboxImage) lightboxImage.src = '';
-
-      // Only release the body scroll lock if the project detail modal
-      // isn't also open underneath — otherwise the page would scroll
-      // behind the still-open modal.
-      const projectDetailModal = document.getElementById('projectDetailModal');
-      if (!projectDetailModal || !projectDetailModal.classList.contains('active')) {
-        document.body.style.overflow = '';
-      }
+      closeDialog(lightbox);
     }
   };
 });

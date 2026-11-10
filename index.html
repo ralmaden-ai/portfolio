@@ -21,7 +21,20 @@
   <meta property="twitter:image" content="https://reymarc-portfolio.vercel.app/assets/avatar.png">
   
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
+  <!-- Set the theme and the js flag before first paint, so dark-mode visitors
+       get no white flash and .reveal content only hides when JS can show it. -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      root.classList.add('js');
+      try {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          root.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -65,7 +78,7 @@
           <span class="logo-tagline">AI <span aria-hidden="true">|</span> Automation</span>
         </span>
       </a>
-      <ul class="nav-menu">
+      <ul class="nav-menu" id="navMenu">
         <li><a href="#services">Services</a></li>
         <li><a href="#projects">Work</a></li>
         <li><a href="#funnels">Funnels</a></li>
@@ -89,7 +102,7 @@
           <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
         </button>
       </div>
-      <button class="nav-toggle" aria-label="Toggle menu">
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
         <span></span>
         <span></span>
         <span></span>
@@ -100,7 +113,7 @@
   <main>
     <section id="home" class="hero">
       <!-- Workflow Visualization Background -->
-      <div class="workflow-bg">
+      <div class="workflow-bg" aria-hidden="true">
         <svg class="workflow-svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
           <!-- === LAYER 1: Top workflow (HTTP pipeline) === -->
           <path class="workflow-line" d="M 100 120 Q 175 80 250 120" />
@@ -244,7 +257,7 @@
         <div class="hero-avatar reveal">
           <img src="assets/avatar.png" alt="Reymarc Almaden" width="200" height="200" />
         </div>
-        <h2 class="hero-name reveal">Reymarc Almaden</h2>
+        <p class="hero-name reveal">Reymarc Almaden</p>
         <span class="badge reveal">Currently accepting new clients</span>
         <h1 class="hero-title reveal">I Help Businesses Automate Operations and Eliminate Manual Work</h1>
         <div class="hero-roles reveal">
@@ -265,15 +278,15 @@
         </div>
         <div class="stats-row reveal">
           <div class="stat">
-            <span class="stat-number" data-target="4">0</span><span class="stat-suffix">+</span>
+            <span class="stat-number" data-target="4">4</span><span class="stat-suffix">+</span>
             <span class="stat-label">Years in Operations</span>
           </div>
           <div class="stat">
-            <span class="stat-number" data-target="8">0</span>
+            <span class="stat-number" data-target="8">8</span>
             <span class="stat-label">Automation Projects</span>
           </div>
           <div class="stat">
-            <span class="stat-number" data-target="25">0</span><span class="stat-suffix">+</span>
+            <span class="stat-number" data-target="25">25</span><span class="stat-suffix">+</span>
             <span class="stat-label">Workflows Built</span>
           </div>
         </div>
@@ -465,15 +478,15 @@
         </div>
 
         <div class="projects-grid">
-          <div class="project-card reveal" data-platforms="n8n ghl" onclick="openProjectDetail(0)">
+          <div class="project-card reveal" data-platforms="n8n ghl">
             <div class="project-card-image">
               <img src="assets/projects/northshore-receptionist.png" alt="AI Receptionist for Urgent Care: the n8n call routing workflow behind the voice assistant" loading="lazy" width="1891" height="882">
               <span class="project-card-platform">n8n + VAPI + GHL</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 01</span>
-              <h3 class="project-card-title">Urgent Care Voice Receptionist for Call Routing</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Every clinic call lands on one line and is sorted by hand.</span><span class="project-card-line"><strong>Built:</strong> A voice assistant that sends callers to the right department.</span><span class="project-card-line"><strong>Status:</strong> Demo. Routing verified on browser test calls.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(0)">Urgent Care Voice Receptionist for Call Routing</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Every clinic call lands on one line and is sorted by hand.</span><span class="project-card-line"><strong>Built:</strong> A voice assistant that sends callers to the right department.</span><span class="project-card-line"><strong>Status:</strong> Routing verified on browser test calls.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">n8n</span>
                 <span class="tech-tag">VAPI</span>
@@ -487,15 +500,17 @@
                 </svg>
               </span>
             </div>
-          </div>          <div class="project-card reveal" data-platforms="n8n" onclick="openProjectDetail(1)">
+          </div>
+
+          <div class="project-card reveal" data-platforms="n8n">
             <div class="project-card-image">
               <img src="assets/projects/ai-receptionist.png" alt="AI Receptionist for HVAC: the n8n workflow behind the voice agent" loading="lazy" width="1766" height="783">
               <span class="project-card-platform">n8n + VAPI</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 02</span>
-              <h3 class="project-card-title">Voice Receptionist for Service Bookings</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Calls ring out while every technician is on a job.</span><span class="project-card-line"><strong>Built:</strong> A voice assistant that books the job while the caller is on the line.</span><span class="project-card-line"><strong>Status:</strong> Demo. Tested end to end in browser calls.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(1)">Voice Receptionist for Service Bookings</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Calls ring out while every technician is on a job.</span><span class="project-card-line"><strong>Built:</strong> A voice assistant that books the job while the caller is on the line.</span><span class="project-card-line"><strong>Status:</strong> Tested end to end in browser calls.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">n8n</span>
                 <span class="tech-tag">VAPI</span>
@@ -511,15 +526,15 @@
             </div>
           </div>
 
-          <div class="project-card reveal" data-platforms="n8n" onclick="openProjectDetail(2)">
+          <div class="project-card reveal" data-platforms="n8n">
             <div class="project-card-image">
               <img src="assets/projects/facebook-chatbot.png" alt="AI Facebook Chatbot n8n workflow" loading="lazy" width="1137" height="718">
               <span class="project-card-platform">n8n</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 03</span>
-              <h3 class="project-card-title">Messenger Assistant for Business FAQs</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> The same Messenger questions pile up after hours.</span><span class="project-card-line"><strong>Built:</strong> An assistant that answers from one document you keep up to date.</span><span class="project-card-line"><strong>Status:</strong> Demo. Not yet connected to a live page.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(2)">Messenger Assistant for Business FAQs</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> The same Messenger questions pile up after hours.</span><span class="project-card-line"><strong>Built:</strong> An assistant that answers from one document you keep up to date.</span><span class="project-card-line"><strong>Status:</strong> Not yet connected to a live page.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">n8n</span>
                 <span class="tech-tag">Google Gemini</span>
@@ -535,15 +550,15 @@
             </div>
           </div>
 
-          <div class="project-card reveal" data-platforms="n8n" onclick="openProjectDetail(3)">
+          <div class="project-card reveal" data-platforms="n8n">
             <div class="project-card-image">
               <img src="assets/projects/medical-records-retrieval.png" alt="Medical Records Retrieval System: all seven n8n workflows" loading="lazy" width="777" height="758">
               <span class="project-card-platform">n8n</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 04</span>
-              <h3 class="project-card-title">Medical Records Retrieval Automation</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Getting records out of a hospital is weeks of chasing by hand.</span><span class="project-card-line"><strong>Built:</strong> Seven automations that run each request from first ask to closed file.</span><span class="project-card-line"><strong>Status:</strong> Demo. One case run end to end in testing.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(3)">Medical Records Retrieval Automation</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Getting records out of a hospital is weeks of chasing by hand.</span><span class="project-card-line"><strong>Built:</strong> Seven automations that run each request from first ask to closed file.</span><span class="project-card-line"><strong>Status:</strong> One case run end to end in testing.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">n8n</span>
                 <span class="tech-tag">Groq AI</span>
@@ -559,15 +574,15 @@
             </div>
           </div>
 
-          <div class="project-card reveal" data-platforms="n8n" onclick="openProjectDetail(4)">
+          <div class="project-card reveal" data-platforms="n8n">
             <div class="project-card-image">
               <img src="assets/projects/lead-followup-system.png" alt="Lead Follow-up and Recovery System n8n workflow" loading="lazy" width="1578" height="255">
               <span class="project-card-platform">n8n</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 05</span>
-              <h3 class="project-card-title">Lead Follow-Up System for Lost Leads</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> A lead gets one reply and is forgotten if nobody chases.</span><span class="project-card-line"><strong>Built:</strong> A personal reply, then timed follow-ups until they answer.</span><span class="project-card-line"><strong>Status:</strong> Demo. Not yet run with real leads.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(4)">Lead Follow-Up System for Lost Leads</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> A lead gets one reply and is forgotten if nobody chases.</span><span class="project-card-line"><strong>Built:</strong> A personal reply, then timed follow-ups until they answer.</span><span class="project-card-line"><strong>Status:</strong> Not yet run with real leads.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">n8n</span>
                 <span class="tech-tag">Groq AI</span>
@@ -583,15 +598,15 @@
             </div>
           </div>
 
-          <div class="project-card reveal" data-platforms="ghl" onclick="openProjectDetail(5)" hidden>
+          <div class="project-card reveal" data-platforms="ghl" hidden>
             <div class="project-card-image">
               <img src="assets/projects/peak-performance-workflow.png" alt="Peak Performance appointment confirmation and reminders workflow" loading="lazy" width="725" height="2759">
               <span class="project-card-platform">GoHighLevel</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 06</span>
-              <h3 class="project-card-title">Fitness Funnel for Lead Booking</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Sign-ups drop out before booking, and no-shows eat the rest.</span><span class="project-card-line"><strong>Built:</strong> A booking funnel with a confirmation and three reminders per session.</span><span class="project-card-line"><strong>Status:</strong> Demo. Not yet run with real members.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(5)">Fitness Funnel for Lead Booking</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Sign-ups drop out before booking, and no-shows eat the rest.</span><span class="project-card-line"><strong>Built:</strong> A booking funnel with a confirmation and three reminders per session.</span><span class="project-card-line"><strong>Status:</strong> Not yet run with real members.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">GoHighLevel</span>
                 <span class="tech-tag">Sales Funnels</span>
@@ -607,15 +622,15 @@
             </div>
           </div>
 
-          <div class="project-card reveal" data-platforms="ghl" onclick="openProjectDetail(6)" hidden>
+          <div class="project-card reveal" data-platforms="ghl" hidden>
             <div class="project-card-image">
               <img src="assets/projects/harbor-vale-workflow.png" alt="Harbor and Vale new lead intake buyer seller branch workflow" loading="lazy" width="1232" height="1624">
               <span class="project-card-platform">GoHighLevel</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 07</span>
-              <h3 class="project-card-title">Real Estate CRM for Lead Routing</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Every enquiry lands in one inbox until someone sorts it.</span><span class="project-card-line"><strong>Built:</strong> A valuation page and CRM that send each lead to the right agent instantly.</span><span class="project-card-line"><strong>Status:</strong> Demo. Not yet run with real enquiries.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(6)">Real Estate CRM for Lead Routing</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Every enquiry lands in one inbox until someone sorts it.</span><span class="project-card-line"><strong>Built:</strong> A valuation page and CRM that send each lead to the right agent instantly.</span><span class="project-card-line"><strong>Status:</strong> Not yet run with real enquiries.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">GoHighLevel</span>
                 <span class="tech-tag">CRM Pipelines</span>
@@ -631,15 +646,15 @@
             </div>
           </div>
 
-          <div class="project-card reveal" data-platforms="n8n" onclick="openProjectDetail(7)">
+          <div class="project-card reveal" data-platforms="n8n">
             <div class="project-card-image">
               <img src="assets/projects/au-business-hub.png" alt="Business Automation Hub weekly operations report workflow" loading="lazy" width="1281" height="600">
               <span class="project-card-platform">n8n</span>
             </div>
             <div class="project-card-body">
               <span class="project-number">PROJECT 08</span>
-              <h3 class="project-card-title">Automation Hub for Business Operations</h3>
-              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Five weekly chores done by hand across a business group.</span><span class="project-card-line"><strong>Built:</strong> Five automations that read the sheets, write the email, and mark the row.</span><span class="project-card-line"><strong>Status:</strong> Demo. Not yet run on live business data.</span></p>
+              <h3 class="project-card-title"><button type="button" class="card-hit" onclick="openProjectDetail(7)">Automation Hub for Business Operations</button></h3>
+              <p class="project-card-desc"><span class="project-card-line"><strong>Problem:</strong> Five weekly chores done by hand across a business group.</span><span class="project-card-line"><strong>Built:</strong> Five automations that read the sheets, write the email, and mark the row.</span><span class="project-card-line"><strong>Status:</strong> Not yet run on live business data.</span></p>
               <div class="project-tech-stack">
                 <span class="tech-tag">n8n</span>
                 <span class="tech-tag">Groq AI</span>
@@ -662,8 +677,8 @@
 
     <!-- Project Detail Modal -->
     <div id="projectDetailModal" class="project-detail-modal" onclick="closeProjectDetail(event)">
-      <div class="project-detail-panel">
-        <button class="project-detail-close" onclick="closeProjectDetail(event)" aria-label="Close project details">
+      <div class="project-detail-panel" role="dialog" aria-modal="true" aria-labelledby="projectDetailTitle" tabindex="-1">
+        <button type="button" class="project-detail-close" onclick="closeProjectDetail(event)" aria-label="Close project details">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -698,36 +713,36 @@
           <h4 class="project-detail-section-title">Case Study</h4>
           <div class="case-study-grid">
             <div class="case-study-block">
-              <span class="case-study-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span class="case-study-label case-study-label--project">
+                <span class="case-study-icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
                 Project
               </span>
               <p id="projectDetailClient"></p>
             </div>
             <div class="case-study-block" id="projectDetailSituationWrap">
-              <span class="case-study-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span class="case-study-label case-study-label--situation">
+                <span class="case-study-icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
                 The situation
               </span>
               <p id="projectDetailSituation"></p>
             </div>
             <div class="case-study-block" id="projectDetailBreakingWrap">
-              <span class="case-study-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span class="case-study-label case-study-label--breaking">
+                <span class="case-study-icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></span>
                 What was breaking
               </span>
               <p id="projectDetailBreaking"></p>
             </div>
             <div class="case-study-block" id="projectDetailBuiltWrap">
-              <span class="case-study-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              <span class="case-study-label case-study-label--built">
+                <span class="case-study-icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span>
                 What I built
               </span>
               <p id="projectDetailBuilt"></p>
             </div>
             <div class="case-study-block" id="projectDetailChangedWrap">
-              <span class="case-study-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <span class="case-study-label case-study-label--outcome">
+                <span class="case-study-icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
                 Project outcome
               </span>
               <p id="projectDetailChanged"></p>
@@ -785,8 +800,8 @@
         </div>
 
         <div class="project-detail-footer">
-          <button type="button" class="btn btn-ghost" onclick="event.stopPropagation(); document.getElementById('projectDetailModal').classList.remove('active'); document.body.style.overflow = '';">Close</button>
-          <a href="#contact" class="btn btn-primary btn-icon" onclick="document.getElementById('projectDetailModal').classList.remove('active'); document.body.style.overflow = '';">
+          <button type="button" class="btn btn-ghost" onclick="closeProjectDetail()">Close</button>
+          <a href="#contact" class="btn btn-primary btn-icon" onclick="closeProjectDetail(null, { restoreFocus: false })">
             Request Similar Automation
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </a>
@@ -799,11 +814,11 @@
         <div class="section-header reveal">
           <span class="section-tag">Funnels & Designs</span>
           <h2 class="section-title">Landing Pages That Convert</h2>
-          <p class="section-subtitle">Landing pages I designed and built, each wired to the CRM behind it. Both are demo builds with sample content.</p>
+          <p class="section-subtitle">Landing pages I designed and built, each wired to the CRM behind it. Both use sample content.</p>
         </div>
 
         <div class="funnels-grid">
-          <div class="funnel-card reveal" onclick="openCertLightbox('assets/projects/full/funnel-peak-performance.png')">
+          <div class="funnel-card reveal">
             <div class="funnel-card-image">
               <img src="assets/projects/funnel-peak-performance.png" alt="Peak Performance Fitness landing page" loading="lazy" width="782" height="2558">
               <span class="funnel-card-platform">GoHighLevel</span>
@@ -813,8 +828,8 @@
               </span>
             </div>
             <div class="funnel-card-body">
-              <h3 class="funnel-card-title">Fitness Studio Landing Page</h3>
-              <p class="funnel-card-desc">A one-page site for a fitness studio that turns a visitor into a booked consultation: a clear ask at the top, the problem it solves, proof, what you get, and testimonials. Every form on it feeds the reminder workflow in the fitness project above.<br><strong>Status:</strong> Demo. The studio name, figures and testimonials on the page are sample content.</p>
+              <h3 class="funnel-card-title"><button type="button" class="card-hit" onclick="openCertLightbox('assets/projects/full/funnel-peak-performance.png', this)">Fitness Studio Landing Page</button></h3>
+              <p class="funnel-card-desc">A one-page site for a fitness studio that turns a visitor into a booked consultation: a clear ask at the top, the problem it solves, proof, what you get, and testimonials. Every form on it feeds the reminder workflow in the fitness project above.<br><strong>Status:</strong> The studio name, figures and testimonials on the page are sample content.</p>
               <div class="project-tech-stack">
                 <span class="tech-tag">GoHighLevel</span>
                 <span class="tech-tag">Landing Page</span>
@@ -823,9 +838,9 @@
             </div>
           </div>
 
-          <div class="funnel-card reveal" onclick="openCertLightbox('assets/projects/full/funnel-harbor-vale.png')">
+          <div class="funnel-card reveal">
             <div class="funnel-card-image">
-              <img src="assets/projects/funnel-harbor-vale.png" alt="Harbor & Vale Realty landing page" loading="lazy" width="1003" height="1994">
+              <img src="assets/projects/funnel-harbor-vale.png" alt="Harbor & Vale Realty landing page" loading="lazy" width="800" height="1590">
               <span class="funnel-card-platform">GoHighLevel</span>
               <span class="funnel-card-zoom">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
@@ -833,8 +848,8 @@
               </span>
             </div>
             <div class="funnel-card-body">
-              <h3 class="funnel-card-title">Home Valuation Landing Page</h3>
-              <p class="funnel-card-desc">A one-page site for a real estate brokerage that turns a homeowner into a valuation lead: a valuation request at the top, the costly mistakes to avoid, a four-step process, trust points, and testimonials. The form feeds the lead routing workflows in the real estate project above.<br><strong>Status:</strong> Demo. The brokerage name and testimonials are sample content.</p>
+              <h3 class="funnel-card-title"><button type="button" class="card-hit" onclick="openCertLightbox('assets/projects/full/funnel-harbor-vale.png', this)">Home Valuation Landing Page</button></h3>
+              <p class="funnel-card-desc">A one-page site for a real estate brokerage that turns a homeowner into a valuation lead: a valuation request at the top, the costly mistakes to avoid, a four-step process, trust points, and testimonials. The form feeds the lead routing workflows in the real estate project above.<br><strong>Status:</strong> The brokerage name and testimonials are sample content.</p>
               <div class="project-tech-stack">
                 <span class="tech-tag">GoHighLevel</span>
                 <span class="tech-tag">Landing Page</span>
@@ -857,62 +872,69 @@
         <div class="marquee-wrap reveal">
           <div class="marquee marquee--left">
             <div class="marquee__track">
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="n8n" width="28" height="28"><span>n8n</span></div>
-              <div class="marquee__pill"><img src="assets/logos/gohighlevel.jpg" alt="GoHighLevel" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="Make" width="28" height="28"><span>Make</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="Zapier" width="28" height="28"><span>Zapier</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="Airtable" width="28" height="28"><span>Airtable</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="Google Sheets" width="28" height="28"><span>Google Sheets</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="n8n" width="28" height="28"><span>n8n</span></div>
-              <div class="marquee__pill"><img src="assets/logos/gohighlevel.jpg" alt="GoHighLevel" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="Make" width="28" height="28"><span>Make</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="Zapier" width="28" height="28"><span>Zapier</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="Airtable" width="28" height="28"><span>Airtable</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="Google Sheets" width="28" height="28"><span>Google Sheets</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="" width="28" height="28"><span>n8n</span></div>
+              <div class="marquee__pill"><img src="assets/logos/gohighlevel.jpg" alt="" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="" width="28" height="28"><span>Make</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="" width="28" height="28"><span>Zapier</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="" width="28" height="28"><span>Airtable</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="" width="28" height="28"><span>Google Sheets</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="" width="28" height="28"><span>n8n</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/gohighlevel.jpg" alt="" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="" width="28" height="28"><span>Make</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="" width="28" height="28"><span>Zapier</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="" width="28" height="28"><span>Airtable</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="" width="28" height="28"><span>Google Sheets</span></div>
               <!-- duplicate for seamless loop -->
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="n8n" width="28" height="28"><span>n8n</span></div>
-              <div class="marquee__pill"><img src="assets/logos/gohighlevel.jpg" alt="GoHighLevel" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="Make" width="28" height="28"><span>Make</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="Zapier" width="28" height="28"><span>Zapier</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="Airtable" width="28" height="28"><span>Airtable</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="Google Sheets" width="28" height="28"><span>Google Sheets</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="n8n" width="28" height="28"><span>n8n</span></div>
-              <div class="marquee__pill"><img src="assets/logos/gohighlevel.jpg" alt="GoHighLevel" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="Make" width="28" height="28"><span>Make</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="Zapier" width="28" height="28"><span>Zapier</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="Airtable" width="28" height="28"><span>Airtable</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="Google Sheets" width="28" height="28"><span>Google Sheets</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="" width="28" height="28"><span>n8n</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/gohighlevel.jpg" alt="" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="" width="28" height="28"><span>Make</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="" width="28" height="28"><span>Zapier</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="" width="28" height="28"><span>Airtable</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="" width="28" height="28"><span>Google Sheets</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/n8n/EA4B71" alt="" width="28" height="28"><span>n8n</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/gohighlevel.jpg" alt="" width="28" height="28" class="pill-img"><span>GoHighLevel</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/make/6D00CC" alt="" width="28" height="28"><span>Make</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/zapier/FF4A00" alt="" width="28" height="28"><span>Zapier</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/airtable/18BFFF" alt="" width="28" height="28"><span>Airtable</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/googlesheets/34A853" alt="" width="28" height="28"><span>Google Sheets</span></div>
             </div>
           </div>
           <div class="marquee marquee--right">
             <div class="marquee__track">
-              <div class="marquee__pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
-              <div class="marquee__pill"><img src="assets/logos/openai.webp" alt="OpenAI" width="28" height="28" class="pill-img"><span>OpenAI</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/claude/D97757" alt="Claude" width="28" height="28"><span>Claude</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="Gemini" width="28" height="28"><span>Gemini</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="Gmail" width="28" height="28"><span>Gmail</span></div>
-              <div class="marquee__pill"><img src="assets/logos/lovable.png" alt="Lovable" width="28" height="28" class="pill-img"><span>Lovable</span></div>
-              <div class="marquee__pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
-              <div class="marquee__pill"><img src="assets/logos/openai.webp" alt="OpenAI" width="28" height="28" class="pill-img"><span>OpenAI</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/claude/D97757" alt="Claude" width="28" height="28"><span>Claude</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="Gemini" width="28" height="28"><span>Gemini</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="Gmail" width="28" height="28"><span>Gmail</span></div>
-              <div class="marquee__pill"><img src="assets/logos/lovable.png" alt="Lovable" width="28" height="28" class="pill-img"><span>Lovable</span></div>
+              <div class="marquee__pill"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
+              <div class="marquee__pill"><img src="assets/logos/openai.svg" alt="" width="28" height="28"><span>OpenAI</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/claude/D97757" alt="" width="28" height="28"><span>Claude</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="" width="28" height="28"><span>Gemini</span></div>
+              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="" width="28" height="28"><span>Gmail</span></div>
+              <div class="marquee__pill"><img src="assets/logos/lovable.png" alt="" width="28" height="28" class="pill-img"><span>Lovable</span></div>
+              <div class="marquee__pill" aria-hidden="true"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/openai.svg" alt="" width="28" height="28"><span>OpenAI</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/claude/D97757" alt="" width="28" height="28"><span>Claude</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="" width="28" height="28"><span>Gemini</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="" width="28" height="28"><span>Gmail</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/lovable.png" alt="" width="28" height="28" class="pill-img"><span>Lovable</span></div>
               <!-- duplicate for seamless loop -->
-              <div class="marquee__pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
-              <div class="marquee__pill"><img src="assets/logos/openai.webp" alt="OpenAI" width="28" height="28" class="pill-img"><span>OpenAI</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/claude/D97757" alt="Claude" width="28" height="28"><span>Claude</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="Gemini" width="28" height="28"><span>Gemini</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="Gmail" width="28" height="28"><span>Gmail</span></div>
-              <div class="marquee__pill"><img src="assets/logos/lovable.png" alt="Lovable" width="28" height="28" class="pill-img"><span>Lovable</span></div>
-              <div class="marquee__pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
-              <div class="marquee__pill"><img src="assets/logos/openai.webp" alt="OpenAI" width="28" height="28" class="pill-img"><span>OpenAI</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/claude/D97757" alt="Claude" width="28" height="28"><span>Claude</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="Gemini" width="28" height="28"><span>Gemini</span></div>
-              <div class="marquee__pill"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="Gmail" width="28" height="28"><span>Gmail</span></div>
-              <div class="marquee__pill"><img src="assets/logos/lovable.png" alt="Lovable" width="28" height="28" class="pill-img"><span>Lovable</span></div>
+              <div class="marquee__pill" aria-hidden="true"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/openai.svg" alt="" width="28" height="28"><span>OpenAI</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/claude/D97757" alt="" width="28" height="28"><span>Claude</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="" width="28" height="28"><span>Gemini</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="" width="28" height="28"><span>Gmail</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/lovable.png" alt="" width="28" height="28" class="pill-img"><span>Lovable</span></div>
+              <div class="marquee__pill" aria-hidden="true"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><rect width="28" height="28" rx="6" fill="#F55036"/><text x="14" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#fff">G</text></svg><span>Groq</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/openai.svg" alt="" width="28" height="28"><span>OpenAI</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/claude/D97757" alt="" width="28" height="28"><span>Claude</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" alt="" width="28" height="28"><span>Gemini</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="https://cdn.simpleicons.org/gmail/EA4335" alt="" width="28" height="28"><span>Gmail</span></div>
+              <div class="marquee__pill" aria-hidden="true"><img src="assets/logos/lovable.png" alt="" width="28" height="28" class="pill-img"><span>Lovable</span></div>
             </div>
           </div>
+        </div>
+        <div class="marquee-controls">
+          <button type="button" class="marquee-toggle" id="marqueeToggle" aria-pressed="false">
+            <svg class="icon-pause" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            <svg class="icon-play" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+            <span class="marquee-toggle-label">Pause scrolling</span>
+          </button>
         </div>
       </div>
     </section>
@@ -927,7 +949,7 @@
 
         <div class="certs-grid">
           <!-- Cert Card 1: n8n -->
-          <div class="cert-card reveal" onclick="openCertLightbox('assets/certifications/n8n.png')">
+          <div class="cert-card reveal">
             <div class="cert-card-frame">
               <img src="assets/certifications/n8n.png" alt="n8n Certificate" loading="lazy">
               <span class="cert-card-badge" style="background: #EA4B71;">
@@ -935,13 +957,13 @@
               </span>
             </div>
             <div class="cert-card-body">
-              <h3 class="cert-card-title">AI Automation with n8n</h3>
+              <h3 class="cert-card-title"><button type="button" class="card-hit" onclick="openCertLightbox('assets/certifications/n8n.png', this)">AI Automation with n8n</button></h3>
               <p class="cert-card-issuer">Technical Virtual Assistants PH &middot; May 2026</p>
             </div>
           </div>
 
           <!-- Cert Card 2: Make -->
-          <div class="cert-card reveal" onclick="openCertLightbox('assets/certifications/make.png')">
+          <div class="cert-card reveal">
             <div class="cert-card-frame">
               <img src="assets/certifications/make.png" alt="Make Certificate" loading="lazy">
               <span class="cert-card-badge" style="background: #6D00CC;">
@@ -949,13 +971,13 @@
               </span>
             </div>
             <div class="cert-card-body">
-              <h3 class="cert-card-title">No Code Automation with Make.com</h3>
+              <h3 class="cert-card-title"><button type="button" class="card-hit" onclick="openCertLightbox('assets/certifications/make.png', this)">No Code Automation with Make.com</button></h3>
               <p class="cert-card-issuer">Technical Virtual Assistants PH &middot; Mar 2026</p>
             </div>
           </div>
 
           <!-- Cert Card 3: GoHighLevel -->
-          <div class="cert-card reveal" onclick="openCertLightbox('assets/certifications/gohighlevel.png')">
+          <div class="cert-card reveal">
             <div class="cert-card-frame">
               <img src="assets/certifications/gohighlevel.png" alt="GoHighLevel Certificate" loading="lazy">
               <span class="cert-card-badge" style="background: #4F46E5;">
@@ -963,13 +985,13 @@
               </span>
             </div>
             <div class="cert-card-body">
-              <h3 class="cert-card-title">HighLevel CRM Full Training</h3>
+              <h3 class="cert-card-title"><button type="button" class="card-hit" onclick="openCertLightbox('assets/certifications/gohighlevel.png', this)">HighLevel CRM Full Training</button></h3>
               <p class="cert-card-issuer">Tara AI Community+ &middot; Jul 2026</p>
             </div>
           </div>
 
           <!-- Cert Card 4: Zapier -->
-          <div class="cert-card reveal" onclick="openCertLightbox('assets/certifications/zapier.png')">
+          <div class="cert-card reveal">
             <div class="cert-card-frame">
               <img src="assets/certifications/zapier.png" alt="Zapier Certificate" loading="lazy">
               <span class="cert-card-badge" style="background: #FF4A00;">
@@ -977,13 +999,13 @@
               </span>
             </div>
             <div class="cert-card-body">
-              <h3 class="cert-card-title">No Code Automation with Zapier</h3>
+              <h3 class="cert-card-title"><button type="button" class="card-hit" onclick="openCertLightbox('assets/certifications/zapier.png', this)">No Code Automation with Zapier</button></h3>
               <p class="cert-card-issuer">Technical Virtual Assistants PH &middot; Jan 2026</p>
             </div>
           </div>
 
           <!-- Cert Card 5: Prompt Engineering -->
-          <div class="cert-card reveal" onclick="openCertLightbox('assets/certifications/prompt-engineering.png')">
+          <div class="cert-card reveal">
             <div class="cert-card-frame">
               <img src="assets/certifications/prompt-engineering.png" alt="Prompt Engineering Certificate" loading="lazy">
               <span class="cert-card-badge" style="background: linear-gradient(135deg, #7C3AED, #A78BFA);">
@@ -993,7 +1015,7 @@
               </span>
             </div>
             <div class="cert-card-body">
-              <h3 class="cert-card-title">Prompt Engineering</h3>
+              <h3 class="cert-card-title"><button type="button" class="card-hit" onclick="openCertLightbox('assets/certifications/prompt-engineering.png', this)">Prompt Engineering</button></h3>
               <p class="cert-card-issuer">Tara AI Community+ &middot; Jun 2026</p>
             </div>
           </div>
@@ -1002,14 +1024,20 @@
     </section>
 
     <!-- Certifications Lightbox Modal -->
-    <div id="certGridLightbox" class="cert-grid-lightbox" onclick="closeCertGridLightbox(event)">
-      <button class="cert-grid-lightbox-close" onclick="closeCertGridLightbox(event)" aria-label="Close certificate view">
+    <div id="certGridLightbox" class="cert-grid-lightbox" onclick="closeCertGridLightbox(event)" role="dialog" aria-modal="true" aria-label="Full-size image">
+      <button type="button" class="cert-grid-lightbox-close" onclick="closeCertGridLightbox(event)" aria-label="Close full-size image">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
-      <img id="certGridLightboxImage" class="cert-grid-lightbox-image" src="" alt="Certificate view">
+      <span class="booking-spinner cert-grid-lightbox-spinner" aria-hidden="true"></span>
+      <img id="certGridLightboxImage" class="cert-grid-lightbox-image" src="" alt="">
+      <button type="button" class="cert-grid-lightbox-zoom" id="certGridLightboxZoom" aria-pressed="false">
+        <svg class="icon-zoom-in" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        <svg class="icon-zoom-out" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>
+        <span class="cert-grid-lightbox-zoom-label">Zoom in</span>
+      </button>
     </div>
 
     <section id="experience" class="section section-experience">
@@ -1114,10 +1142,10 @@
     </section>
 
     <section id="contact" class="section section-contact">
-      <div class="container">
+      <div class="container contact-layout">
         <div class="contact-header reveal">
           <h2>Let's build something that runs itself.</h2>
-          <p>Whether you need workflow automation, a CRM system, or a website and funnel that converts: I'm here to help. Pick a time below and let's talk through your automation needs, no pressure, just a conversation.</p>
+          <p>Whether you need workflow automation, a CRM system, or a website and funnel that converts: I'm here to help. Pick a time and let's talk through your automation needs, no pressure, just a conversation.</p>
           <div class="contact-details">
             <div class="contact-detail-item">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
@@ -1127,18 +1155,17 @@
               </div>
             </div>
           </div>
+          <p class="form-note contact-note">Prefer to message first? Connect with me on <a href="https://www.linkedin.com/in/rey-automations" target="_blank" rel="noopener noreferrer">LinkedIn</a>.</p>
         </div>
 
         <div class="contact-calendly-embed reveal">
-          <div id="calendlyEmbed" style="min-width:320px;height:700px;">
-            <div class="calendly-loading">
-              <span class="calendly-spinner" aria-hidden="true"></span>
+          <div id="calendlyEmbed">
+            <div class="calendly-status calendly-loading" role="status">
+              <span class="booking-spinner" aria-hidden="true"></span>
               <span>Loading your calendar…</span>
             </div>
           </div>
         </div>
-
-        <p class="form-note form-note--center">Prefer to message first? Connect with me on <a href="https://www.linkedin.com/in/rey-automations" target="_blank" rel="noopener noreferrer">LinkedIn</a>.</p>
       </div>
     </section>
   </main>
@@ -1163,6 +1190,5 @@
   </footer>
 
   <script src="script.js"></script>
-  <script src="https://assets.calendly.com/assets/external/widget.js"></script>
 </body>
 </html>
